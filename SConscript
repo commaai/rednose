@@ -8,6 +8,9 @@ ekf_sym = "#rednose/helpers/ekf_sym.py"
 
 to_build = {
     'live': ('examples/live_kf.py', 'examples/generated'),
+    'pos_computer_4': ('rednose/helpers/lst_sq_computer.py', 'examples/generated'),
+    'pos_computer_5': ('rednose/helpers/lst_sq_computer.py', 'examples/generated'),
+    'feature_handler_5': ('rednose/helpers/feature_handler.py', 'examples/generated'),
 }
 
 
@@ -23,7 +26,6 @@ for target, (command, generated_folder) in found.items():
 
     env.Command(target_files,
                 [templates, command_file, sympy_helpers, ekf_sym],
-                command_file.get_abspath()+" "+target
-    )
+                command_file.get_abspath() + " " + target + " " + Dir(generated_folder).get_abspath())
 
     env.SharedLibrary(f'{generated_folder}/' + target, target_files[0])

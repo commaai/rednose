@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import sys
 
 import numpy as np
 
@@ -37,7 +38,7 @@ class FeatureHandler():
   name = 'feature_handler'
 
   @staticmethod
-  def generate_code(K=5):
+  def generate_code(generated_dir, K=5):
     # Wrap c code for slow matching
     c_header = "\nvoid merge_features(double *tracks, double *features, long long *empty_idxs);"
 
@@ -47,9 +48,9 @@ class FeatureHandler():
     c_code += "\n" + open(os.path.join(TEMPLATE_DIR, "feature_handler.c")).read()
 
     filename = f"{FeatureHandler.name}_{K}"
-    write_code(filename, c_code, c_header)
+    write_code(generated_dir, filename, c_code, c_header)
 
-  def __init__(self, K=5):
+  def __init__(self, generated_dir, K=5):
     self.MAX_TRACKS = 6000
     self.K = K
 
@@ -64,7 +65,7 @@ class FeatureHandler():
     self.tracks[:] = np.nan
 
     name = f"{FeatureHandler.name}_{K}"
-    ffi, lib = load_code(name)
+    ffi, lib = load_code(generated_dir, name)
 
     def merge_features_c(tracks, features, empty_idxs):
       lib.merge_features(ffi.cast("double *", tracks.ctypes.data),
@@ -163,4 +164,5 @@ def generate_orient_error_jac(K):
 
 if __name__ == "__main__":
   # TODO: get K from argparse
-  FeatureHandler.generate_code()
+  generated_dir = sys.argv[2]
+  FeatureHandler.generate_code(generated_dir)

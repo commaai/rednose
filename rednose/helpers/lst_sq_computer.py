@@ -47,7 +47,7 @@ class LstSqComputer():
   name = 'pos_computer'
 
   @staticmethod
-  def generate_code(K=4):
+  def generate_code(generated_dir, K=4):
     sympy_functions = generate_residual(K)
     header, code = sympy_into_c(sympy_functions)
 
@@ -59,15 +59,15 @@ class LstSqComputer():
     """
 
     filename = f"{LstSqComputer.name}_{K}"
-    write_code(filename, code, header)
+    write_code(generated_dir, filename, code, header)
 
-  def __init__(self, K=4, MIN_DEPTH=2, MAX_DEPTH=500):
+  def __init__(self, generated_dir, K=4, MIN_DEPTH=2, MAX_DEPTH=500):
     self.to_c = orient.rot_matrix(-np.pi / 2, -np.pi / 2, 0)
     self.MAX_DEPTH = MAX_DEPTH
     self.MIN_DEPTH = MIN_DEPTH
 
     name = f"{LstSqComputer.name}_{K}"
-    ffi, lib = load_code(name)
+    ffi, lib = load_code(generated_dir, name)
 
     # wrap c functions
     def residual_jac(x, poses, img_positions):
@@ -170,4 +170,5 @@ def project(poses, ecef_pos):
 
 if __name__ == "__main__":
   K = int(sys.argv[1].split("_")[-1])
-  LstSqComputer.generate_code(K=K)
+  generated_dir = sys.argv[2]
+  LstSqComputer.generate_code(generated_dir, K=K)
