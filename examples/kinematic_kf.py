@@ -7,8 +7,6 @@ import sympy as sp
 from rednose import KalmanFilter
 from rednose.helpers.ekf_sym import gen_code
 
-EARTH_GM = 3.986005e14  # m^3/s^2 (gravitational constant * mass of earth)
-
 
 class ObservationKind():
   UNKNOWN = 0
