@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import os
+import sys
 import numpy as np
 import sympy as sp
 
@@ -7,7 +7,6 @@ from rednose.helpers import KalmanError
 from rednose.helpers.ekf_sym import EKF_sym, gen_code
 from rednose.helpers.sympy_helpers import (euler_rotate, quat_matrix_r, quat_rotate)
 
-GENERATED_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'generated'))
 EARTH_GM = 3.986005e14  # m^3/s^2 (gravitational constant * mass of earth)
 
 
@@ -121,7 +120,7 @@ class LiveKalman():
                (0.05 / 60)**2, (0.05 / 60)**2, (0.05 / 60)**2])
 
   @staticmethod
-  def generate_code():
+  def generate_code(generated_dir):
     name = LiveKalman.name
     dim_state = LiveKalman.initial_x.shape[0]
     dim_state_err = LiveKalman.initial_P_diag.shape[0]
@@ -240,9 +239,9 @@ class LiveKalman():
                [h_phone_rot_sym, ObservationKind.CAMERA_ODO_ROTATION, None],
                [h_imu_frame_sym, ObservationKind.IMU_FRAME, None]]
 
-    gen_code(GENERATED_DIR, name, f_sym, dt, state_sym, obs_eqs, dim_state, dim_state_err, eskf_params)
+    gen_code(generated_dir, name, f_sym, dt, state_sym, obs_eqs, dim_state, dim_state_err, eskf_params)
 
-  def __init__(self):
+  def __init__(self, generated_dir):
     self.dim_state = self.initial_x.shape[0]
     self.dim_state_err = self.initial_P_diag.shape[0]
 
@@ -255,7 +254,7 @@ class LiveKalman():
                       ObservationKind.ECEF_POS: np.diag([5**2, 5**2, 5**2])}
 
     # init filter
-    self.filter = EKF_sym(GENERATED_DIR, self.name, self.Q, self.initial_x, np.diag(self.initial_P_diag), self.dim_state, self.dim_state_err)
+    self.filter = EKF_sym(generated_dir, self.name, self.Q, self.initial_x, np.diag(self.initial_P_diag), self.dim_state, self.dim_state_err)
 
   @property
   def x(self):
@@ -335,4 +334,5 @@ class LiveKalman():
 
 
 if __name__ == "__main__":
-  LiveKalman.generate_code()
+  generated_dir = sys.argv[2]
+  LiveKalman.generate_code(generated_dir)

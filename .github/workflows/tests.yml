@@ -11,3 +11,5 @@ jobs:
     - uses: actions/checkout@v2
     - name: Build docker image
       run: docker build -t rednose .
+    - name: Unit Tests
+      run: docker run rednose bash -c "cd /project/rednose/examples; python -m unittest discover"
