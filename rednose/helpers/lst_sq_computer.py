@@ -5,9 +5,8 @@ import sys
 import numpy as np
 import sympy as sp
 
-import common.transformations.orientation as orient
-from rednose.helpers import (TEMPLATE_DIR, load_code, write_code)
-from rednose.helpers.sympy_helpers import (quat_rotate, sympy_into_c)
+from rednose.helpers import TEMPLATE_DIR, load_code, write_code
+from rednose.helpers.sympy_helpers import quat_rotate, sympy_into_c, rot_matrix, rotations_from_quats
 
 
 def generate_residual(K):
@@ -15,7 +14,7 @@ def generate_residual(K):
   poses_sym = sp.MatrixSymbol('poses', 7 * K, 1)
   img_pos_sym = sp.MatrixSymbol('img_positions', 2 * K, 1)
   alpha, beta, rho = x_sym
-  to_c = sp.Matrix(orient.rot_matrix(-np.pi / 2, -np.pi / 2, 0))
+  to_c = sp.Matrix(rot_matrix(-np.pi / 2, -np.pi / 2, 0))
   pos_0 = sp.Matrix(np.array(poses_sym[K * 7 - 7:K * 7 - 4])[:, 0])
   q = poses_sym[K * 7 - 4:K * 7]
   quat_rot = quat_rotate(*q)
@@ -62,7 +61,7 @@ class LstSqComputer():
     write_code(generated_dir, filename, code, header)
 
   def __init__(self, generated_dir, K=4, MIN_DEPTH=2, MAX_DEPTH=500):
-    self.to_c = orient.rot_matrix(-np.pi / 2, -np.pi / 2, 0)
+    self.to_c = rot_matrix(-np.pi / 2, -np.pi / 2, 0)
     self.MAX_DEPTH = MAX_DEPTH
     self.MIN_DEPTH = MIN_DEPTH
 
@@ -137,7 +136,7 @@ class LstSqComputer():
     # res = self.gauss_newton(self.residual, self.residual_jac, x, (poses, img_positions)) # diy gauss_newton
 
     alpha, beta, rho = res[0]
-    rot_0_to_g = (orient.rotations_from_quats(poses[-1, 3:])).dot(self.to_c.T)
+    rot_0_to_g = (rotations_from_quats(poses[-1, 3:])).dot(self.to_c.T)
     return (rot_0_to_g.dot(np.array([alpha, beta, 1]))) / rho + poses[-1, :3]
 
 
@@ -163,7 +162,7 @@ def unroll_shutter(img_positions, poses, v, rot_rates, ecef_pos):
 def project(poses, ecef_pos):
   img_positions = np.zeros((len(poses), 2))
   for i, p in enumerate(poses):
-    cam_frame = orient.rotations_from_quats(p[3:]).T.dot(ecef_pos - p[:3])
+    cam_frame = rotations_from_quats(p[3:]).T.dot(ecef_pos - p[:3])
     img_positions[i] = np.array([cam_frame[1] / cam_frame[0], cam_frame[2] / cam_frame[0]])
   return img_positions
 

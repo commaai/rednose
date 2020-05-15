@@ -5,18 +5,8 @@ import sys
 
 import numpy as np
 
-from rednose.helpers import (TEMPLATE_DIR, load_code, write_code)
-from rednose.helpers.sympy_helpers import quat_matrix_l
-
-
-def rot_matrix(roll, pitch, yaw):
-  cr, sr = np.cos(roll), np.sin(roll)
-  cp, sp = np.cos(pitch), np.sin(pitch)
-  cy, sy = np.cos(yaw), np.sin(yaw)
-  rr = np.array([[1,0,0],[0, cr,-sr],[0, sr, cr]])
-  rp = np.array([[cp,0,sp],[0, 1,0],[-sp, 0, cp]])
-  ry = np.array([[cy,-sy,0],[sy, cy,0],[0, 0, 1]])
-  return ry.dot(rp.dot(rr))
+from rednose.helpers import TEMPLATE_DIR, load_code, write_code
+from rednose.helpers.sympy_helpers import quat_matrix_l, rot_matrix
 
 
 def sane(track):

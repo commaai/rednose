@@ -2,6 +2,62 @@
 import sympy as sp
 import numpy as np
 
+# TODO: remove code duplication between openpilot.common.orientation
+def quat2rot(quats):
+  quats = np.array(quats)
+  input_shape = quats.shape
+  quats = np.atleast_2d(quats)
+  Rs = np.zeros((quats.shape[0], 3, 3))
+  q0 = quats[:, 0]
+  q1 = quats[:, 1]
+  q2 = quats[:, 2]
+  q3 = quats[:, 3]
+  Rs[:, 0, 0] = q0 * q0 + q1 * q1 - q2 * q2 - q3 * q3
+  Rs[:, 0, 1] = 2 * (q1 * q2 - q0 * q3)
+  Rs[:, 0, 2] = 2 * (q0 * q2 + q1 * q3)
+  Rs[:, 1, 0] = 2 * (q1 * q2 + q0 * q3)
+  Rs[:, 1, 1] = q0 * q0 - q1 * q1 + q2 * q2 - q3 * q3
+  Rs[:, 1, 2] = 2 * (q2 * q3 - q0 * q1)
+  Rs[:, 2, 0] = 2 * (q1 * q3 - q0 * q2)
+  Rs[:, 2, 1] = 2 * (q0 * q1 + q2 * q3)
+  Rs[:, 2, 2] = q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3
+
+  if len(input_shape) < 2:
+    return Rs[0]
+  else:
+    return Rs
+
+
+def euler2quat(eulers):
+  eulers = np.array(eulers)
+  if len(eulers.shape) > 1:
+    output_shape = (-1,4)
+  else:
+    output_shape = (4,)
+  eulers = np.atleast_2d(eulers)
+  gamma, theta, psi = eulers[:,0],  eulers[:,1],  eulers[:,2]
+
+  q0 = np.cos(gamma / 2) * np.cos(theta / 2) * np.cos(psi / 2) + \
+       np.sin(gamma / 2) * np.sin(theta / 2) * np.sin(psi / 2)
+  q1 = np.sin(gamma / 2) * np.cos(theta / 2) * np.cos(psi / 2) - \
+       np.cos(gamma / 2) * np.sin(theta / 2) * np.sin(psi / 2)
+  q2 = np.cos(gamma / 2) * np.sin(theta / 2) * np.cos(psi / 2) + \
+       np.sin(gamma / 2) * np.cos(theta / 2) * np.sin(psi / 2)
+  q3 = np.cos(gamma / 2) * np.cos(theta / 2) * np.sin(psi / 2) - \
+       np.sin(gamma / 2) * np.sin(theta / 2) * np.cos(psi / 2)
+
+  quats = np.array([q0, q1, q2, q3]).T
+  for i in range(len(quats)):
+    if quats[i,0] < 0:
+      quats[i] = -quats[i]
+  return quats.reshape(output_shape)
+
+
+def euler2rot(eulers):
+  return quat2rot(euler2quat(eulers))
+
+rotations_from_quats = quat2rot
+
 
 def cross(x):
   ret = sp.Matrix(np.zeros((3, 3)))
@@ -9,6 +65,16 @@ def cross(x):
   ret[1, 0], ret[1, 2] = x[2], -x[0]
   ret[2, 0], ret[2, 1] = -x[1], x[0]
   return ret
+
+
+def rot_matrix(roll, pitch, yaw):
+  cr, sr = np.cos(roll), np.sin(roll)
+  cp, sp = np.cos(pitch), np.sin(pitch)
+  cy, sy = np.cos(yaw), np.sin(yaw)
+  rr = np.array([[1,0,0],[0, cr,-sr],[0, sr, cr]])
+  rp = np.array([[cp,0,sp],[0, 1,0],[-sp, 0, cp]])
+  ry = np.array([[cy,-sy,0],[sy, cy,0],[0, 0, 1]])
+  return ry.dot(rp.dot(rr))
 
 
 def euler_rotate(roll, pitch, yaw):
