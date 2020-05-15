@@ -6,6 +6,9 @@ but particularly for visual odometry, sensor fusion localization or SLAM. It is 
 accurate results, work online or offline, be fairly computationally efficient, be easy to design filters with in
 python.
 
+![](examples/kinematic_kf.png)
+
+
 ## Feature walkthrough
 
 ### Extended Kalman Filter with symbolic Jacobian computation
@@ -16,16 +19,16 @@ system at every step, this provides a close to optimal estimator when the linear
 introduces too much noise, one can use an Iterated Extended Kalman Filter, Unscented Kalman Filter or a Particle Filter. For
 most applications those estimators are overkill and introduce too much complexity and require a lot of additional compute.
 
-Conventionally Extended Kalman Filters are implemented by writing the system's dynamic equations and then manually symbolically 
+Conventionally Extended Kalman Filters are implemented by writing the system's dynamic equations and then manually symbolically
 calculating the Jacobians for the linearization. For complex systems this is time consuming and very prone to calculation errors.
 This library symbolically computes the Jacobians using sympy to simplify the system's definition and remove the possiblity of introducing calculation errors.
 
 ### Error State Kalman Filter
 3D localization algorithms ussually also require estimating orientation of an object in 3D. Orientation is generally represented
-with euler angles or quaternions. 
+with euler angles or quaternions.
 
 Euler angles have several problems, there are mulitple ways to represent the same orientation,
-gimbal lock can cause the loss of a degree of freedom and lastly their behaviour is very non-linear when errors are large. 
+gimbal lock can cause the loss of a degree of freedom and lastly their behaviour is very non-linear when errors are large.
 Quaternions with one strictly positive dimension don't suffer from these issues, but have another set of problems.
 Quaternions need to be normalized otherwise they will grow unbounded, this is cannot be cleanly enforced in a kalman filter.
 Most importantly though a quaternion has 4 dimensions, but only represents 3 degrees of freedom, so there is one redundant dimension.
@@ -38,7 +41,7 @@ How do you integrate feature-based visual odometry with a Kalman filter? The pro
 The solution is to use an [MSCKF](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.437.1085&rep=rep1&type=pdf), which this library fully supports.
 
 ### Rauch–Tung–Striebel smoothing
-When doing offline estimation with a kalman filter there can be an initialization period where states are badly estimated. 
+When doing offline estimation with a kalman filter there can be an initialization period where states are badly estimated.
 Global estimators don't suffer from this, to make our kalman filter competitive with global optimizers we can run the filter
 backwards using an RTS smoother. Those combined with potentially multiple forward and backwards passes of the data should make
 performance very close to global optimization.
@@ -48,5 +51,3 @@ A lot of measurements do not come from a Gaussian distribution and as such have 
 of the Kalman filter. This can cause a lot of performance issues if not dealt with. This library allows the use of a mahalanobis
 distance statistical test on the incoming measurements to deal with this. Note that good initialization is critical to prevent
 good measurements from being rejected.
-
-
