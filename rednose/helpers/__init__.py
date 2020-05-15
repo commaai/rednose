@@ -15,7 +15,9 @@ def write_code(folder, name, code, header):
 def load_code(folder, name):
   shared_fn = os.path.join(folder, f"lib{name}.so")
   header_fn = os.path.join(folder, f"{name}.h")
-  header = open(header_fn).read()
+
+  with open(header_fn) as f:
+    header = f.read()
 
   ffi = FFI()
   ffi.cdef(header)
