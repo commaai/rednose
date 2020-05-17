@@ -408,6 +408,10 @@ class EKF_sym():
       R  (mat [n,dim_z, dim_z]): Measurement Noise
       extra_args    (list, [n]): Values used in H computations
     """
+    assert z.shape[0] == R.shape[0]
+    assert z.shape[1] == R.shape[1]
+    assert z.shape[1] == R.shape[2]
+
     # initialize time
     if self.filter_time is None:
       self.filter_time = t
