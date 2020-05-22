@@ -17,7 +17,7 @@ measurements one can use a Recursive Bayesian estimator. For a linear Markov Pro
 Unfortunately, a lot of systems are non-linear. Extended Kalman Filters can model systems by linearizing the non-linear
 system at every step, this provides a close to optimal estimator when the linearization is good enough. If the linearization
 introduces too much noise, one can use an Iterated Extended Kalman Filter, Unscented Kalman Filter or a Particle Filter. For
-most applications those estimators are overkill and introduce too much complexity and require a lot of additional compute.
+most applications those estimators are overkill. They add a lot of complexity and require a lot of additional compute.
 
 Conventionally Extended Kalman Filters are implemented by writing the system's dynamic equations and then manually symbolically
 calculating the Jacobians for the linearization. For complex systems this is time consuming and very prone to calculation errors.
