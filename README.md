@@ -24,7 +24,7 @@ calculating the Jacobians for the linearization. For complex systems this is tim
 This library symbolically computes the Jacobians using sympy to simplify the system's definition and remove the possiblity of introducing calculation errors.
 
 ### Error State Kalman Filter
-3D localization algorithms ussually also require estimating orientation of an object in 3D. Orientation is generally represented
+3D localization algorithms usually also require estimating orientation of an object in 3D. Orientation is generally represented
 with euler angles or quaternions.
 
 Euler angles have several problems, there are mulitple ways to represent the same orientation,
