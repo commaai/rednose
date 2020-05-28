@@ -13,6 +13,6 @@ jobs:
       run: docker build -t rednose .
     - name: Static analysis
       run: |
-        docker run cereal bash -c "git init && git add -A && pre-commit run --all"
+        docker run rednose bash -c "git init && git add -A && pre-commit run --all"
     - name: Unit Tests
       run: docker run rednose bash -c "cd /project/rednose/examples; python -m unittest discover"
