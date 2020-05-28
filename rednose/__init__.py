@@ -1,14 +1,16 @@
+from typing import Any, Dict
+
 import numpy as np
 
 from rednose.helpers.ekf_sym import EKF_sym
 
 
 class KalmanFilter:
-  name = None
+  name = "<name>"
   initial_x = None
   initial_P_diag = None
   Q = None
-  obs_noise = None
+  obs_noise : Dict[int, Any] = {}
 
   def __init__(self, generated_dir):
     dim_state = self.initial_x.shape[0]
