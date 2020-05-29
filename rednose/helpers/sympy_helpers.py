@@ -49,7 +49,7 @@ def euler2quat(eulers):
   quats = np.array([q0, q1, q2, q3]).T
   for i in range(len(quats)):
     if quats[i,0] < 0:
-      quats[i] = -quats[i]
+      quats[i] = -quats[i]  # pylint: disable=unsupported-assignment-operation
   return quats.reshape(output_shape)
 
 

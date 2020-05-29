@@ -2,7 +2,7 @@ import os
 import numpy as np
 import unittest
 
-from kinematic_kf import KinematicKalman, ObservationKind, States
+from kinematic_kf import KinematicKalman, ObservationKind, States  # pylint: disable=import-error
 
 GENERATED_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'generated'))
 
@@ -55,7 +55,7 @@ class TestKinematic(unittest.TestCase):
     self.assertAlmostEqual(vs_kf_std[-1], 0.6695762270974388)
 
     if "PLOT" in os.environ:
-      import matplotlib.pyplot as plt
+      import matplotlib.pyplot as plt  # pylint: disable=import-error
       plt.figure()
       plt.subplot(2, 1, 1)
       plt.plot(ts, xs, 'k', label='Simulation')
