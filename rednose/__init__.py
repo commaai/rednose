@@ -10,7 +10,7 @@ class KalmanFilter:
   initial_x = None
   initial_P_diag = None
   Q = None
-  obs_noise : Dict[int, Any] = {}
+  obs_noise: Dict[int, Any] = {}
 
   def __init__(self, generated_dir):
     dim_state = self.initial_x.shape[0]
