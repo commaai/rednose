@@ -10,6 +10,7 @@ repos:
     rev: master
     hooks:
     -   id: mypy
+        additional_dependencies: ['git+https://github.com/numpy/numpy-stubs']
 -   repo: https://github.com/PyCQA/flake8
     rev: master
     hooks:

@@ -7,9 +7,9 @@ from rednose.helpers.ekf_sym import EKF_sym
 
 class KalmanFilter:
   name = "<name>"
-  initial_x = None
-  initial_P_diag = None
-  Q = None
+  initial_x = np.zeros((0, 0))
+  initial_P_diag = np.zeros((0, 0))
+  Q = np.zeros((0, 0))
   obs_noise: Dict[int, Any] = {}
 
   def __init__(self, generated_dir):
