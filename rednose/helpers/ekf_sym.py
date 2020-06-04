@@ -25,8 +25,8 @@ def null(H, eps=1e-12):
   return np.transpose(null_space)
 
 
-def gen_code(folder, name, f_sym, dt_sym, x_sym, obs_eqs, dim_x, dim_err, eskf_params=None, msckf_params=None,
-             maha_test_kinds=[], global_vars=None):  # pylint: disable=dangerous-default-value
+def gen_code(folder, name, f_sym, dt_sym, x_sym, obs_eqs, dim_x, dim_err, eskf_params=None, msckf_params=None,  # pylint: disable=dangerous-default-value
+             maha_test_kinds=[], global_vars=None):
   # optional state transition matrix, H modifier
   # and err_function if an error-state kalman filter (ESKF)
   # is desired. Best described in "Quaternion kinematics
