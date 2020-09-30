@@ -21,13 +21,13 @@ most applications those estimators are overkill. They add a lot of complexity an
 
 Conventionally Extended Kalman Filters are implemented by writing the system's dynamic equations and then manually symbolically
 calculating the Jacobians for the linearization. For complex systems this is time consuming and very prone to calculation errors.
-This library symbolically computes the Jacobians using sympy to simplify the system's definition and remove the possiblity of introducing calculation errors.
+This library symbolically computes the Jacobians using sympy to simplify the system's definition and remove the possibility of introducing calculation errors.
 
 ### Error State Kalman Filter
 3D localization algorithms usually also require estimating orientation of an object in 3D. Orientation is generally represented
 with euler angles or quaternions.
 
-Euler angles have several problems, there are mulitple ways to represent the same orientation,
+Euler angles have several problems, there are multiple ways to represent the same orientation,
 gimbal lock can cause the loss of a degree of freedom and lastly their behaviour is very non-linear when errors are large.
 Quaternions with one strictly positive dimension don't suffer from these issues, but have another set of problems.
 Quaternions need to be normalized otherwise they will grow unbounded, this is cannot be cleanly enforced in a kalman filter.
