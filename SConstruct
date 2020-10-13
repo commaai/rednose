@@ -18,7 +18,7 @@ env = Environment(
     "-Werror=format-extra-args",
   ],
   CFLAGS="-std=gnu11",
-  CXXFLAGS="-std=c++17",
+  CXXFLAGS="-std=c++1z",
 )
 
 
