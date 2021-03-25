@@ -30,3 +30,5 @@ for target, (command, generated_folder) in found.items():
                 command_file.get_abspath() + " " + target + " " + Dir(generated_folder).get_abspath())
 
     env.SharedLibrary(f'{generated_folder}/' + target, target_files[0])
+
+env.SharedLibrary('#rednose/helpers/ekf_sym', ['#rednose/helpers/ekf_sym.cc'])
