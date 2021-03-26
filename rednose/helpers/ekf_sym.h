@@ -12,11 +12,13 @@
 
 namespace EKFS {
 
+typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXdr;
+
 typedef struct Estimate {
   Eigen::VectorXd xk1;
   Eigen::VectorXd xk;
-  Eigen::MatrixXd Pk1;
-  Eigen::MatrixXd Pk;
+  MatrixXdr Pk1;
+  MatrixXdr Pk;
   double t;
   int kind;
   std::vector<Eigen::VectorXd> y;
@@ -30,7 +32,7 @@ public:
     std::string name,
     Eigen::VectorXd Q,
     Eigen::VectorXd x_initial,
-    Eigen::MatrixXd P_initial,
+    MatrixXdr P_initial,
     int dim_main,
     int dim_main_err,
     int N = 0,
@@ -43,14 +45,14 @@ public:
 
   void init_state(
     Eigen::VectorXd state,
-    Eigen::MatrixXd covs,
+    MatrixXdr covs,
     double filter_time
   );
 
   void reset_rewind();
   void augment();
   Eigen::VectorXd state();
-  Eigen::MatrixXd covs();
+  MatrixXdr covs();
 
   std::vector<int> rewind(double t);
   void checkpoint(int obs);
@@ -59,7 +61,7 @@ public:
     double t,
     int kind,
     std::vector<Eigen::VectorXd> z,
-    std::vector<Eigen::MatrixXd> R,
+    std::vector<MatrixXdr> R,
     std::vector<std::vector<double>> extra_args = std::vector<std::vector<double>>(),
     bool augment = false
   );
@@ -67,34 +69,34 @@ public:
     double t,
     int kind,
     std::vector<Eigen::VectorXd> z,
-    std::vector<Eigen::MatrixXd> R,
+    std::vector<MatrixXdr> R,
     std::vector<std::vector<double>> extra_args,
     bool augment
   );
 
   bool maha_test(
     Eigen::VectorXd x,
-    Eigen::MatrixXd P,
+    MatrixXdr P,
     int kind,
     Eigen::VectorXd z,
-    Eigen::MatrixXd R,
+    MatrixXdr R,
     std::vector<double> extra_args = std::vector<double>(),
     double maha_thresh = 0.95
   );
 
-  Eigen::MatrixXd rts_smooth(std::vector<Estimate> estimates, bool norm_quats = false);
+  MatrixXdr rts_smooth(std::vector<Estimate> estimates, bool norm_quats = false);
 
-  std::pair<Eigen::VectorXd, Eigen::MatrixXd> _predict(
+  std::pair<Eigen::VectorXd, MatrixXdr> _predict(
     Eigen::VectorXd x,
-    Eigen::MatrixXd P,
+    MatrixXdr P,
     double dt
   );
-  std::tuple<Eigen::VectorXd, Eigen::MatrixXd, Eigen::VectorXd> _update(
+  std::tuple<Eigen::VectorXd, MatrixXdr, Eigen::VectorXd> _update(
     Eigen::VectorXd x,
-    Eigen::MatrixXd P,
+    MatrixXdr P,
     int kind,
     Eigen::VectorXd z,
-    Eigen::MatrixXd R,
+    MatrixXdr R,
     std::vector<double> extra_args = std::vector<double>()
   );
 
@@ -102,7 +104,7 @@ private:
   static double chi2_ppf(double thres, int dim);
 
   Eigen::VectorXd x;  // state
-  Eigen::MatrixXd P;  // covs
+  MatrixXdr P;  // covs
 
   bool msckf;
   int N;

@@ -7,7 +7,7 @@ EKFSym::EKFSym(
   std::string name,
   VectorXd Q,
   VectorXd x_initial,
-  MatrixXd P_initial,
+  MatrixXdr P_initial,
   int dim_main,
   int dim_main_err,
   int N,
@@ -27,6 +27,8 @@ EKFSym::EKFSym(
   Q(Q),
   max_rewind_age(max_rewind_age)
 {
+  // TODO: add logger
+
   this->msckf = N > 0;
 
   this->dim_x = x_initial.rows();
@@ -102,12 +104,12 @@ EKFSym::EKFSym(
   } */
 }
 
-std::tuple<VectorXd, MatrixXd, VectorXd> EKFSym::_update(
+std::tuple<VectorXd, MatrixXdr, VectorXd> EKFSym::_update(
   VectorXd x,
-  MatrixXd P,
+  MatrixXdr P,
   int kind,
   VectorXd z,
-  MatrixXd R,
+  MatrixXdr R,
   std::vector<double> extra_args)
 {
   this->update_dfuns[kind](x.data(), P.data(), z.data(), R.data(), extra_args.data());
@@ -120,12 +122,12 @@ std::tuple<VectorXd, MatrixXd, VectorXd> EKFSym::_update(
   return std::tuple(x, P, y);
 }
 
-std::pair<VectorXd, MatrixXd> EKFSym::_predict(VectorXd x, MatrixXd P, double dt) {
+std::pair<VectorXd, MatrixXdr> EKFSym::_predict(VectorXd x, MatrixXdr P, double dt) {
   this->predict_dfun(x.data(), P.data(), this->Q.data(), dt);
   return std::pair(x, P);
 }
 
-void EKFSym::init_state(VectorXd state, MatrixXd covs, double filter_time) {
+void EKFSym::init_state(VectorXd state, MatrixXdr covs, double filter_time) {
   this->x = state;
   this->P = covs;
   this->filter_time = filter_time;
@@ -155,14 +157,14 @@ void EKFSym::augment() {
 
   // push through augmented covs
   assert(this->P.rows() == this->dim_err && this->P.cols() == this->dim_err);
-  MatrixXd P_reduced = this->P;
+  MatrixXdr P_reduced = this->P;
   P_reduced.block(d2, 0, d4, P_reduced.cols()) = P_reduced.block(d2 + d4, 0, d4, P_reduced.cols());
   P_reduced.block(0, d2, P_reduced.rows(), d4) = P_reduced.block(0, d2 + d4, P_reduced.rows(), d4);
   P_reduced.conservativeResize(this->dim_err - d4, this->dim_err - d4);
   assert(P_reduced.rows() == this->dim_err - d4 && P_reduced.cols() == this->dim_err - d4);
-  MatrixXd to_mult = MatrixXd::Zero(this->dim_err, this->dim_err - d4);
-  /* TODO to_mult.block(0, 0, to_mult.rows() - d4, to_mult.cols()) = MatrixXd::Identity(this->dim_err - d4, this->dim_err - d4);
-  to_mult(lastN(d4), seq(0, d4 - 1)) = MatrixXd::Identity(d4, d4);
+  MatrixXdr to_mult = MatrixXdr::Zero(this->dim_err, this->dim_err - d4);
+  /* TODO to_mult.block(0, 0, to_mult.rows() - d4, to_mult.cols()) = MatrixXdr::Identity(this->dim_err - d4, this->dim_err - d4);
+  to_mult(lastN(d4), seq(0, d4 - 1)) = MatrixXdr::Identity(d4, d4);
   this->P = to_mult.dot(P_reduced.dot(to_mult.transpose()));
   this->augment_times(seq(0, last - 1)) = this->augment_times(seq(1, last));
   this->augment_times.tail(1) = this->filter_time;
@@ -173,7 +175,7 @@ VectorXd EKFSym::state() {
   return this->x;
 }
 
-MatrixXd EKFSym::covs() {
+MatrixXdr EKFSym::covs() {
   return this->P;
 }
 
@@ -196,7 +198,7 @@ Estimate EKFSym::predict_and_update_batch(
   double t,
   int kind,
   std::vector<VectorXd> z,
-  std::vector<MatrixXd> R,
+  std::vector<MatrixXdr> R,
   std::vector<std::vector<double>> extra_args,
   bool augment)
 {
@@ -226,7 +228,7 @@ Estimate EKFSym::_predict_and_update_batch(
   double t,
   int kind,
   std::vector<VectorXd> z,
-  std::vector<MatrixXd> R,
+  std::vector<MatrixXdr> R,
   std::vector<std::vector<double>> extra_args,
   bool augment)
 {
@@ -235,7 +237,7 @@ Estimate EKFSym::_predict_and_update_batch(
   this->_predict(t);
 
   VectorXd xk_km1 = this->x;
-  MatrixXd Pk_km1 = this->P;
+  MatrixXdr Pk_km1 = this->P;
 
   // update batch
   std::vector<VectorXd> y;
@@ -250,7 +252,7 @@ Estimate EKFSym::_predict_and_update_batch(
   }
 
   VectorXd xk_k = this->x;
-  MatrixXd Pk_k = this->P;
+  MatrixXdr Pk_k = this->P;
 
   if (augment) {
     this->augment();
@@ -262,10 +264,10 @@ Estimate EKFSym::_predict_and_update_batch(
   return { xk_km1, xk_k, Pk_km1, Pk_k, t, kind, y, z, extra_args };
 }
 
-bool EKFSym::maha_test(VectorXd x, MatrixXd P, int kind, VectorXd z, MatrixXd R, std::vector<double> extra_args, double maha_thresh) {
+bool EKFSym::maha_test(VectorXd x, MatrixXdr P, int kind, VectorXd z, MatrixXdr R, std::vector<double> extra_args, double maha_thresh) {
   // init vars
   VectorXd h = VectorXd::Zero(z.rows());
-  MatrixXd H = MatrixXd::Zero(z.rows(), this->dim_x);
+  MatrixXdr H = MatrixXdr::Zero(z.rows(), this->dim_x);
 
   // C functions
   this->h_dfuns[kind](x.data(), extra_args.data(), h.data());
@@ -275,11 +277,11 @@ bool EKFSym::maha_test(VectorXd x, MatrixXd P, int kind, VectorXd z, MatrixXd R,
   VectorXd y = z - h;
 
   // if using eskf
-  MatrixXd H_mod = MatrixXd::Zero(x.rows(), P.rows());
+  MatrixXdr H_mod = MatrixXdr::Zero(x.rows(), P.rows());
   this->H_mod_dfun(x.data(), H_mod.data());
   H = H * H_mod;
 
-  MatrixXd a = ((H * P) * H.transpose() + R).inverse();
+  MatrixXdr a = ((H * P) * H.transpose() + R).inverse();
   double maha_dist = y.transpose() * (a * y);
   return (maha_dist <= chi2_ppf(maha_thresh, y.rows()));
 }
@@ -288,27 +290,27 @@ double EKFSym::chi2_ppf(double thres, int dim) {
   return 1.0; // TODO
 }
 
-Eigen::MatrixXd EKFSym::rts_smooth(std::vector<Estimate> estimates, bool norm_quats) {
+MatrixXdr EKFSym::rts_smooth(std::vector<Estimate> estimates, bool norm_quats) {
   // Returns rts smoothed results of kalman filter estimates
   // If the kalman state is augmented with old states only the main state is smoothed
   VectorXd xk_n = estimates[estimates.size() - 1].xk1;
-  MatrixXd Pk_n = estimates[estimates.size() - 1].Pk1;
-  MatrixXd Fk_1 = MatrixXd::Zero(Pk_n.rows(), Pk_n.cols());
+  MatrixXdr Pk_n = estimates[estimates.size() - 1].Pk1;
+  MatrixXdr Fk_1 = MatrixXdr::Zero(Pk_n.rows(), Pk_n.cols());
 
   std::vector<VectorXd> states_smoothed = { xk_n };
-  std::vector<MatrixXd> covs_smoothed = { Pk_n };
+  std::vector<MatrixXdr> covs_smoothed = { Pk_n };
   for (int k = estimates.size() - 2; k >= 0; k--) {
     VectorXd xk1_n = xk_n;
     if (norm_quats) {
       xk1_n.segment<4>(3) /= xk1_n.segment<4>(3).norm();
     }
-    MatrixXd Pk1_n = Pk_n;
+    MatrixXdr Pk1_n = Pk_n;
 
     VectorXd xk1_k = estimates[k + 1].xk1;
-    MatrixXd Pk1_k = estimates[k + 1].Pk1;
+    MatrixXdr Pk1_k = estimates[k + 1].Pk1;
     double t2 = estimates[k + 1].t;
     VectorXd xk_k = estimates[k + 1].xk;
-    MatrixXd Pk_k = estimates[k + 1].Pk;
+    MatrixXdr Pk_k = estimates[k + 1].Pk;
     double t1 = estimates[k + 1].t;
     double dt = t2 - t1;
     this->F_dfun(xk_k.data(), dt, Fk_1.data());

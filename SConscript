@@ -1,10 +1,10 @@
-Import('env', 'arch')
+Import('env', 'arch', 'envCython')
 
 templates = Glob('#rednose/templates/*')
 
 # TODO: get dependencies based on installation
 sympy_helpers = "#rednose/helpers/sympy_helpers.py"
-ekf_sym = "#rednose/helpers/ekf_sym.py"
+ekf_sym = "#rednose/helpers/ekf_sym_old.py"
 
 to_build = {
     'live': ('examples/live_kf.py', 'examples/generated'),
@@ -32,3 +32,6 @@ for target, (command, generated_folder) in found.items():
     env.SharedLibrary(f'{generated_folder}/' + target, target_files[0])
 
 env.SharedLibrary('#rednose/helpers/ekf_sym', ['#rednose/helpers/ekf_sym.cc'])
+
+envCython.Program('#rednose/helpers/eigency/conversions_pyx.so', '#rednose/helpers/eigency/conversions_pyx.pyx')
+envCython.Program('#rednose/helpers/ekf_sym_pyx.so', '#rednose/helpers/ekf_sym_pyx.pyx')

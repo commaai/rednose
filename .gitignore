@@ -2,12 +2,19 @@ generated/
 .sconsign.dblite
 *.swp
 
+# Cython intermediates
+*_pyx.cpp
+*_pyx.h
+*_pyx_api.h
+*.os
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
 
 # C extensions
+*.o
 *.so
 
 # Distribution / packaging
