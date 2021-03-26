@@ -1,4 +1,4 @@
-Import('env', 'arch', 'envCython')
+Import('env', 'envCython', 'arch')
 
 templates = Glob('#rednose/templates/*')
 
@@ -31,7 +31,13 @@ for target, (command, generated_folder) in found.items():
 
     env.SharedLibrary(f'{generated_folder}/' + target, target_files[0])
 
+env["LIBS"] = ["live"]
+env["LIBPATH"] = ["/home/batman/openpilot/selfdrive/locationd/models/generated/"]
 env.SharedLibrary('#rednose/helpers/ekf_sym', ['#rednose/helpers/ekf_sym.cc'])
 
 envCython.Program('#rednose/helpers/eigency/conversions_pyx.so', '#rednose/helpers/eigency/conversions_pyx.pyx')
-envCython.Program('#rednose/helpers/ekf_sym_pyx.so', '#rednose/helpers/ekf_sym_pyx.pyx')
+
+envCython.Program('#rednose/helpers/ekf_sym_pyx.so',
+    ['#rednose/helpers/ekf_sym_pyx.pyx'],
+    LIBS=["live", "ekf_sym"],
+    LIBPATH=["/home/batman/openpilot/selfdrive/locationd/models/generated/", "/home/batman/openpilot/rednose/helpers/"])

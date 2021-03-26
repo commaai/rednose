@@ -48,8 +48,7 @@ elif arch == "aarch64":
 else:
   envCython["LINKFLAGS"] = ["-pthread", "-shared"]
 
-Export('envCython')
-SConscript(['rednose/helpers/SConscript'])
+Export('env', 'envCython', 'arch')
 
-Export('env', 'arch')
+SConscript(['rednose/helpers/SConscript'])
 SConscript(['SConscript'])

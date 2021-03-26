@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <cassert>
 #include <string>
 #include <vector>
@@ -8,7 +9,9 @@
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Dense>
 
-#include "/home/batman/openpilot/selfdrive/locationd/models/generated/live.h"
+extern "C" {
+  #include "/home/batman/openpilot/selfdrive/locationd/models/generated/live.h"
+}
 
 namespace EKFS {
 
@@ -28,11 +31,28 @@ typedef struct Estimate {
 
 class EKFSym {
 public:
+  EKFSym(int Q);
+
   EKFSym(
     std::string name,
-    Eigen::VectorXd Q,
+    MatrixXdr Q,
     Eigen::VectorXd x_initial,
     MatrixXdr P_initial,
+    int dim_main,
+    int dim_main_err,
+    int N = 0,
+    int dim_augment = 0,
+    int dim_augment_err = 0,
+    std::vector<int> maha_test_kinds = std::vector<int>(),
+    std::vector<std::string> global_vars = std::vector<std::string>(),
+    double max_rewind_age = 1.0
+  );
+
+  EKFSym(
+    std::string name,
+    Eigen::Map<MatrixXdr> Q,
+    Eigen::Map<Eigen::VectorXd> x_initial,
+    Eigen::Map<MatrixXdr> P_initial,
     int dim_main,
     int dim_main_err,
     int N = 0,
@@ -124,7 +144,7 @@ private:
   std::vector<std::string> global_vars;
 
   // process noise
-  Eigen::VectorXd Q;
+  MatrixXdr Q;
 
   // rewind stuff
   int max_rewind_age;

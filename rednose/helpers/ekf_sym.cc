@@ -3,11 +3,116 @@
 using namespace EKFS;
 using namespace Eigen;
 
+EKFSym::EKFSym(int Q) {
+  std::cout << "Testing, 123: " << Q << std::endl;
+}
+
 EKFSym::EKFSym(
   std::string name,
-  VectorXd Q,
+  MatrixXdr Q,
   VectorXd x_initial,
   MatrixXdr P_initial,
+  int dim_main,
+  int dim_main_err,
+  int N,
+  int dim_augment,
+  int dim_augment_err,
+  std::vector<int> maha_test_kinds,
+  std::vector<std::string> global_vars,
+  double max_rewind_age
+) :
+  N(N),
+  dim_augment(dim_augment),
+  dim_augment_err(dim_augment_err),
+  dim_main(dim_main),
+  dim_main_err(dim_main_err),
+  maha_test_kinds(maha_test_kinds),
+  global_vars(global_vars),
+  Q(Q),
+  max_rewind_age(max_rewind_age)
+{
+  // TODO: add logger
+
+  this->msckf = N > 0;
+
+  this->dim_x = x_initial.rows();
+  this->dim_err = P_initial.rows();
+
+  assert(dim_main + dim_augment * N == dim_x);
+  assert(dim_main_err + dim_augment_err * N == this->dim_err);
+  assert(Q.rows() == P_initial.rows() && Q.cols() == P_initial.cols());
+
+  // rewind stuff
+  this->rewind_t = std::vector<double>();
+  this->rewind_states = std::vector<int>();
+  this->rewind_obscache = std::vector<int>();
+  this->init_state(x_initial, P_initial, NAN);
+
+  // Load shared library for kalman specific kinds
+  this->feature_track_kinds = {}; // 'He_'
+  std::vector<int> kinds = { 3, 4, 9, 10, 12, 31, 32, 13, 14, 19 }; // 'h_'
+
+  this->f_dfun = &f_fun;
+  this->F_dfun = &F_fun;
+
+  this->err_dfun = &err_fun;
+  this->inv_err_dfun = &inv_err_fun;
+  this->H_mod_dfun = &H_mod_fun;
+
+  this->predict_dfun = &predict;
+
+  for (int kind : kinds) {
+    // TODO fill in for h_, H_ and update_
+  }
+  this->h_dfuns[3] = &h_3;
+  this->h_dfuns[4] = &h_4;
+  this->h_dfuns[9] = &h_9;
+  this->h_dfuns[10] = &h_10;
+  this->h_dfuns[12] = &h_12;
+  this->h_dfuns[13] = &h_13;
+  this->h_dfuns[14] = &h_14;
+  this->h_dfuns[19] = &h_19;
+  this->h_dfuns[31] = &h_31;
+  this->h_dfuns[32] = &h_32;
+
+  this->H_dfuns[3] = &H_3;
+  //this->H_dfuns[4] = &H_4;
+  this->H_dfuns[9] = &H_9;
+  this->H_dfuns[10] = &H_10;
+  this->H_dfuns[12] = &H_12;
+  this->H_dfuns[13] = &H_13;
+  this->H_dfuns[14] = &H_14;
+  this->H_dfuns[19] = &H_19;
+  this->H_dfuns[31] = &H_31;
+  this->H_dfuns[32] = &H_32;
+
+  this->update_dfuns[3] = &update_3;
+  this->update_dfuns[4] = &update_4;
+  this->update_dfuns[9] = &update_9;
+  this->update_dfuns[10] = &update_10;
+  this->update_dfuns[12] = &update_12;
+  this->update_dfuns[13] = &update_13;
+  this->update_dfuns[14] = &update_14;
+  this->update_dfuns[19] = &update_19;
+  this->update_dfuns[31] = &update_31;
+  this->update_dfuns[32] = &update_32;
+
+  /* if (this->msckf) {
+    for (int kind : this->feature_track_kinds) {
+      this->He_dfuns[kind] = He_<kind>; // TODO fix
+    }
+  } */
+
+  /* for (std::string glob : this->global_vars) {
+    this->set_global_dfuns[glob] = set_[glob];
+  } */
+}
+
+EKFSym::EKFSym(
+  std::string name,
+  Map<MatrixXdr> Q,
+  Map<VectorXd> x_initial,
+  Map<MatrixXdr> P_initial,
   int dim_main,
   int dim_main_err,
   int N,
@@ -72,7 +177,7 @@ EKFSym::EKFSym(
   this->h_dfuns[32] = h_32;
 
   this->H_dfuns[3] = H_3;
-  this->H_dfuns[4] = H_4;
+  //this->H_dfuns[4] = &H_4;
   this->H_dfuns[9] = H_9;
   this->H_dfuns[10] = H_10;
   this->H_dfuns[12] = H_12;

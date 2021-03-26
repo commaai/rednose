@@ -3,18 +3,17 @@
 
 cimport cython
 from libcpp.string cimport string
+from libcpp.vector cimport vector
+from libcpp cimport bool
 cimport numpy as np
 
 import numpy as np
-
-from libcpp.string cimport string
-from libcpp.vector cimport vector
-from libcpp cimport bool
 
 from rednose.helpers.eigency.core_pyx cimport *
 
 cdef extern from "rednose/helpers/ekf_sym.h" namespace "EKFS":
   cdef cppclass EKFSym:
+    EKFSym(int Q)
     EKFSym(
       string name,
       Map[VectorXd] Q,
@@ -48,14 +47,27 @@ cdef extern from "rednose/helpers/ekf_sym.h" namespace "EKFS":
 
 cdef class EKF_sym:
   cdef EKFSym* ekf
-  def __cinit__(self, str name, np.ndarray Q, np.ndarray x_initial, np.ndarray P_initial, int dim_main,
-      int dim_main_err, int N=0, int dim_augment=0, int dim_augment_err=0, list maha_test_kinds=[],
-      list global_vars=[], float max_rewind_age=1.0):
-    self.ekf = new EKFSym(
+  def __cinit__(
+    self,
+    str gen_dir,
+    str name,
+    np.ndarray[np.float64_t, ndim=2] Q,
+    np.ndarray[np.float64_t, ndim=1] x_initial,
+    np.ndarray[np.float64_t, ndim=2] P_initial,
+    int dim_main,
+    int dim_main_err,
+    int N=0,
+    int dim_augment=0,
+    int dim_augment_err=0,
+    list maha_test_kinds=[],
+    list global_vars=[],
+    float max_rewind_age=1.0,
+    logger=None):
+    '''self.ekf = new EKFSym(
       name.encode('utf8'),
-      Map[VectorXd](Q),
-      Map[VectorXd](x_initial),
-      FlattenedMapWithOrder[Matrix, double, Dynamic, Dynamic, RowMajor](P_initial),
+      Map[VectorXd](np.ascontiguousarray(Q, dtype=np.double)),
+      Map[VectorXd](np.ascontiguousarray(x_initial, dtype=np.double)),
+      FlattenedMapWithOrder[Matrix, double, Dynamic, Dynamic, RowMajor](np.ascontiguousarray(P_initial, dtype=np.double)),
       dim_main,
       dim_main_err,
       N,
@@ -64,7 +76,9 @@ cdef class EKF_sym:
       maha_test_kinds,
       global_vars,
       max_rewind_age
-    )
+    )'''
+    # self.ekf = new EKFSym(Map[VectorXd](np.ascontiguousarray(Q, dtype=np.double)))
+    self.ekf = new EKFSym(1)
 
   def __dealloc__(self):
     del self.ekf
