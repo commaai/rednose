@@ -185,40 +185,40 @@ void EKFSym::augment() {
 
 void EKFSym::_predict(double t) {
   // initialize time
-  if (isnan(this->filter_time)) {
+  if (std::isnan(this->filter_time)) {
     this->filter_time = t;
   }
 
   // predict
   double dt = t - this->filter_time;
   assert(dt >= 0.0);
-  auto res = this->_predict(this->x, this->P, dt);
+  std::pair<VectorXd, MatrixXdr>  res = this->_predict(this->x, this->P, dt);
   this->x = res.first;
   this->P = res.second;
   this->filter_time = t;
 }
 
-Estimate EKFSym::predict_and_update_batch(
+void EKFSym::predict_and_update_batch(
   double t,
   int kind,
-  std::vector<eigency::Map<Eigen::VectorXd>> z_map,
-  std::vector<eigency::FlattenedMap<Matrix, double, Dynamic, Dynamic, RowMajor>> R_map,
+  std::vector<Map<VectorXd> > z_map,
+  std::vector<Map<MatrixXdr> > R_map,
   std::vector<std::vector<double>> extra_args,
   bool augment)
 {
   std::vector<VectorXd> z;
-  for (auto zi : z_map) {
+  for (Map<VectorXd> zi : z_map) {
     z.push_back(zi);
   }
   std::vector<MatrixXdr> R;
-  for (auto Ri : R_map) {
+  for (Map<MatrixXdr> Ri : R_map) {
     R.push_back(Ri);
   }
 
   // TODO handle rewinding at this level
 
   /*// rewind
-  if (!isnan(this->filter_time) && t < this->filter_time) {
+  if (!std::isnan(this->filter_time) && t < this->filter_time) {
     if (this->rewind_t.size() == 0 || t < this->rewind_t[0] || t < this->rewind_t[this->rewind_t.size()-1] - this->max_rewind_age) {
       self.logger.error("observation too old at %.3f with filter at %.3f, ignoring" % (t, self.filter_time))
       return;
@@ -228,13 +228,13 @@ Estimate EKFSym::predict_and_update_batch(
     rewound = []
   }*/
 
-  auto ret = this->_predict_and_update_batch(t, kind, z, R, extra_args, augment);
+  Estimate ret = this->_predict_and_update_batch(t, kind, z, R, extra_args, augment);
 
   // optional fast forward
   /*for r in rewound:
     self._predict_and_update_batch(*r)*/
 
-  return ret;
+  //return ret;
 }
 
 Estimate EKFSym::_predict_and_update_batch(
@@ -258,7 +258,7 @@ Estimate EKFSym::_predict_and_update_batch(
     assert(z[i].rows() == R[i].rows());
     assert(z[i].rows() == R[i].cols());
     // update
-    auto res = this->_update(this->x, this->P, kind, z[i], R[i], extra_args[i]);
+    std::tuple<VectorXd, MatrixXdr, VectorXd> res = this->_update(this->x, this->P, kind, z[i], R[i], extra_args[i]);
     this->x = std::get<0>(res);
     this->P = std::get<1>(res);
     y.push_back(std::get<2>(res));
@@ -267,6 +267,7 @@ Estimate EKFSym::_predict_and_update_batch(
   VectorXd xk_k = this->x;
   MatrixXdr Pk_k = this->P;
 
+  assert(!augment);
   if (augment) {
     this->augment();
   }

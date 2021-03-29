@@ -5,13 +5,13 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <cmath>
 
-#include "eigency/eigency_cpp.h"
+#include <eigen3/Eigen/Dense>
 
 extern "C" {  // TODO move to generation
   #include "/home/batman/openpilot/selfdrive/locationd/models/generated/live.h"
 }
-
 
 namespace EKFS {
 
@@ -56,11 +56,11 @@ public:
   MatrixXdr get_covs();
   double get_filter_time();
 
-  Estimate predict_and_update_batch(
+  void predict_and_update_batch(
     double t,
     int kind,
-    std::vector<eigency::Map<Eigen::VectorXd>> z,
-    std::vector<eigency::FlattenedMap<Eigen::Matrix, double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> R,
+    std::vector<Eigen::Map<Eigen::VectorXd> > z,
+    std::vector<Eigen::Map<MatrixXdr> > R,
     std::vector<std::vector<double>> extra_args,
     bool augment = false
   );
