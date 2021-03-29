@@ -7,6 +7,7 @@
 typedef ::std::complex< double > __pyx_t_double_complex;
 typedef ::std::complex< float > __pyx_t_float_complex;
 
+#include "numpy/arrayobject.h"
 #include "conversions_pyx_api.h"
 
 #ifndef EIGENCY_CPP

@@ -6,12 +6,12 @@
 #include <vector>
 #include <map>
 
-#include <eigen3/Eigen/Core>
-#include <eigen3/Eigen/Dense>
+#include "eigency/eigency_cpp.h"
 
-extern "C" {
+extern "C" {  // TODO move to generation
   #include "/home/batman/openpilot/selfdrive/locationd/models/generated/live.h"
 }
+
 
 namespace EKFS {
 
@@ -31,28 +31,11 @@ typedef struct Estimate {
 
 class EKFSym {
 public:
-  EKFSym(int Q);
-
   EKFSym(
     std::string name,
     MatrixXdr Q,
     Eigen::VectorXd x_initial,
     MatrixXdr P_initial,
-    int dim_main,
-    int dim_main_err,
-    int N = 0,
-    int dim_augment = 0,
-    int dim_augment_err = 0,
-    std::vector<int> maha_test_kinds = std::vector<int>(),
-    std::vector<std::string> global_vars = std::vector<std::string>(),
-    double max_rewind_age = 1.0
-  );
-
-  EKFSym(
-    std::string name,
-    Eigen::Map<MatrixXdr> Q,
-    Eigen::Map<Eigen::VectorXd> x_initial,
-    Eigen::Map<MatrixXdr> P_initial,
     int dim_main,
     int dim_main_err,
     int N = 0,
@@ -69,27 +52,31 @@ public:
     double filter_time
   );
 
+  Eigen::VectorXd get_state();
+  MatrixXdr get_covs();
+  double get_filter_time();
+
+  Estimate predict_and_update_batch(
+    double t,
+    int kind,
+    std::vector<eigency::Map<Eigen::VectorXd>> z,
+    std::vector<eigency::FlattenedMap<Eigen::Matrix, double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> R,
+    std::vector<std::vector<double>> extra_args,
+    bool augment = false
+  );
+
+private:
   void reset_rewind();
   void augment();
-  Eigen::VectorXd state();
-  MatrixXdr covs();
 
   std::vector<int> rewind(double t);
   void checkpoint(int obs);
   void _predict(double t);
-  Estimate predict_and_update_batch(
-    double t,
-    int kind,
-    std::vector<Eigen::VectorXd> z,
-    std::vector<MatrixXdr> R,
-    std::vector<std::vector<double>> extra_args = std::vector<std::vector<double>>(),
-    bool augment = false
-  );
   Estimate _predict_and_update_batch(
     double t,
     int kind,
-    std::vector<Eigen::VectorXd> z,
-    std::vector<MatrixXdr> R,
+    std::vector<Eigen::VectorXd> z_map,
+    std::vector<MatrixXdr> R_map,
     std::vector<std::vector<double>> extra_args,
     bool augment
   );
@@ -120,7 +107,6 @@ public:
     std::vector<double> extra_args = std::vector<double>()
   );
 
-private:
   static double chi2_ppf(double thres, int dim);
 
   Eigen::VectorXd x;  // state
