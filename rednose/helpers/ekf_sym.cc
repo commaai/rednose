@@ -16,20 +16,15 @@ EKFSym::EKFSym(
   std::vector<int> maha_test_kinds,
   std::vector<std::string> global_vars,
   double max_rewind_age
-) :
-  N(N),
-  dim_augment(dim_augment),
-  dim_augment_err(dim_augment_err),
-  dim_main(dim_main),
-  dim_main_err(dim_main_err),
-  maha_test_kinds(maha_test_kinds),
-  global_vars(global_vars),
-  max_rewind_age(max_rewind_age)
-{
+) {
   // TODO: add logger
-  this->Q = Q;
 
   this->msckf = N > 0;
+  this->N = N;
+  this->dim_augment = dim_augment;
+  this->dim_augment_err = dim_augment_err;
+  this->dim_main = dim_main;
+  this->dim_main_err = dim_main_err;
 
   this->dim_x = x_initial.rows();
   this->dim_err = P_initial.rows();
@@ -38,10 +33,16 @@ EKFSym::EKFSym(
   assert(dim_main_err + dim_augment_err * N == this->dim_err);
   assert(Q.rows() == P_initial.rows() && Q.cols() == P_initial.cols());
 
-  // rewind stuff
-  this->rewind_t = std::vector<double>();
-  this->rewind_states = std::vector<int>();
-  this->rewind_obscache = std::vector<int>();
+  // kinds that should get mahalanobis distance
+  // tested for outlier rejection
+  this->maha_test_kinds = maha_test_kinds;
+
+  this->global_vars = global_vars;
+
+  // Process nosie
+  this->Q = Q;
+
+  this->max_rewind_age = max_rewind_age;
   this->init_state(x_initial, P_initial, NAN);
 
   // Load shared library for kalman specific kinds
@@ -187,6 +188,37 @@ void EKFSym::augment() {
   assert(this->P.rows() == this->dim_err && this->P.cols() == this->dim_err);*/
 }
 
+void EKFSym::rewind(double t, std::deque<Observation>& rewound) {
+  // rewind observations until t is after previous observation
+  while (this->rewind_t.back() > t) {
+    rewound.push_front(this->rewind_obscache.back());
+    this->rewind_t.pop_back();
+    this->rewind_states.pop_back();
+    this->rewind_obscache.pop_back();
+  }
+
+  // set the state to the time right before that
+  this->filter_time = this->rewind_t.back();
+  this->x = this->rewind_states.back().first;
+  this->P = this->rewind_states.back().second;
+
+  Eigen::IOFormat fmt(4, 0, ", ", ",", "", "");
+}
+
+void EKFSym::checkpoint(Observation obs) {
+  // push to rewinder
+  this->rewind_t.push_back(this->filter_time);
+  this->rewind_states.push_back(std::make_pair(this->x, this->P));
+  this->rewind_obscache.push_back(obs);
+
+  // only keep a certain number around
+  if (this->rewind_t.size() > REWIND_TO_KEEP) {
+    this->rewind_t.pop_front();
+    this->rewind_states.pop_front();
+    this->rewind_obscache.pop_front();
+  }
+}
+
 void EKFSym::_predict(double t) {
   // initialize time
   if (std::isnan(this->filter_time)) {
@@ -222,50 +254,43 @@ bool EKFSym::predict_and_update_batch(
 
   // TODO handle rewinding at this level
 
-  // rewind
+  std::deque<Observation> rewound;
   if (!std::isnan(this->filter_time) && t < this->filter_time) {
-    if (this->rewind_t.size() == 0 || t < this->rewind_t[0] || t < this->rewind_t[this->rewind_t.size()-1] - this->max_rewind_age) {
-      std::cout << "observation too old at " << t << " with filter at " << this->filter_time << ", ignoring" << std::endl;
+    if (this->rewind_t.empty() || t < this->rewind_t.front() || t < this->rewind_t.back() - this->max_rewind_age) {
+      std::cout << "C observation too old at " << t << " with filter at " << this->filter_time << ", ignoring" << std::endl;
       // TODO self.logger.error("observation too old at %.3f with filter at %.3f, ignoring" % (t, self.filter_time))
       return false;
     }
-    //rewound = self.rewind(t)
-  } else {
-    //rewound = []
+    this->rewind(t, rewound);
   }
 
-  this->_predict_and_update_batch(res, t, kind, z, R, extra_args, augment);
+  this->_predict_and_update_batch(res, { t, kind, z, R, extra_args }, augment);
 
   // optional fast forward
-  /*for r in rewound:
-    self._predict_and_update_batch(*r)*/
+  while (!rewound.empty()) {
+    this->_predict_and_update_batch(NULL, rewound.front(), false);
+    rewound.pop_front();
+  }
 
   return true;
 }
 
-void EKFSym::_predict_and_update_batch(
-  Estimate* res,
-  double t,
-  int kind,
-  std::vector<VectorXd> z,
-  std::vector<MatrixXdr> R,
-  std::vector<std::vector<double>> extra_args,
-  bool augment)
-{
-  assert(z.size() == R.size());
+void EKFSym::_predict_and_update_batch(Estimate* res, Observation obs, bool augment) {
+  assert(obs.z.size() == obs.R.size());
 
-  this->_predict(t);
+  this->_predict(obs.t);
 
   VectorXd xk_km1 = this->x;
   MatrixXdr Pk_km1 = this->P;
 
   // update batch
   std::vector<VectorXd> y;
-  for (int i = 0; i < z.size(); i++) {
-    assert(z[i].rows() == R[i].rows());
-    assert(z[i].rows() == R[i].cols());
+  for (int i = 0; i < obs.z.size(); i++) {
+    assert(obs.z[i].rows() == obs.R[i].rows());
+    assert(obs.z[i].rows() == obs.R[i].cols());
     // update
-    std::tuple<VectorXd, MatrixXdr, VectorXd> res = this->_update(this->x, this->P, kind, z[i], R[i], extra_args[i]);
+    std::tuple<VectorXd, MatrixXdr, VectorXd> res =
+      this->_update(this->x, this->P, obs.kind, obs.z[i], obs.R[i], obs.extra_args[i]);
     this->x = std::get<0>(res);
     this->P = std::get<1>(res);
     y.push_back(std::get<2>(res));
@@ -274,24 +299,24 @@ void EKFSym::_predict_and_update_batch(
   VectorXd xk_k = this->x;
   MatrixXdr Pk_k = this->P;
 
-  assert(!augment);
+  assert(!augment); // TODO
   if (augment) {
     this->augment();
   }
 
-  // checkpoint TODO rewind
-  //this->checkpoint((t, kind, z, R, extra_args))
+  this->checkpoint(obs);
 
-  res->xk1 = xk_km1;
-  res->xk = xk_k;
-  res->Pk1 = Pk_km1;
-  res->Pk = Pk_k;
-  res->t = t;
-  res->kind = kind;
-  res->y = y;
-  res->z = z;
-  res->extra_args = extra_args;
-  //return { xk_km1, xk_k, Pk_km1, Pk_k, t, kind, y, z, extra_args };
+  if (res != NULL) {
+    res->xk1 = xk_km1;
+    res->xk = xk_k;
+    res->Pk1 = Pk_km1;
+    res->Pk = Pk_k;
+    res->t = obs.t;
+    res->kind = obs.kind;
+    res->y = y;
+    res->z = obs.z;
+    res->extra_args = obs.extra_args;
+  }
 }
 
 bool EKFSym::maha_test(VectorXd x, MatrixXdr P, int kind, VectorXd z, MatrixXdr R, std::vector<double> extra_args, double maha_thresh) {

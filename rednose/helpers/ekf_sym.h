@@ -4,6 +4,7 @@
 #include <cassert>
 #include <string>
 #include <vector>
+#include <deque>
 #include <map>
 #include <cmath>
 
@@ -13,9 +14,19 @@ extern "C" {  // TODO move to generation
   #include "/home/batman/openpilot/selfdrive/locationd/models/generated/live.h"
 }
 
+#define REWIND_TO_KEEP 512
+
 namespace EKFS {
 
 typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXdr;
+
+typedef struct Observation {
+  double t;
+  int kind;
+  std::vector<Eigen::VectorXd> z;
+  std::vector<MatrixXdr> R;
+  std::vector<std::vector<double>> extra_args;
+} Observation;
 
 typedef struct Estimate {
   Eigen::VectorXd xk1;
@@ -71,18 +82,10 @@ private:
   void reset_rewind();
   void augment();
 
-  std::vector<int> rewind(double t);
-  void checkpoint(int obs);
+  void rewind(double t, std::deque<Observation>& rewound);
+  void checkpoint(Observation obs);
   void _predict(double t);
-  void _predict_and_update_batch(
-    Estimate* res,
-    double t,
-    int kind,
-    std::vector<Eigen::VectorXd> z_map,
-    std::vector<MatrixXdr> R_map,
-    std::vector<std::vector<double>> extra_args,
-    bool augment
-  );
+  void _predict_and_update_batch(Estimate* res, Observation obs, bool augment);
 
   bool maha_test(
     Eigen::VectorXd x,
@@ -136,10 +139,10 @@ private:
   MatrixXdr Q;
 
   // rewind stuff
-  int max_rewind_age;
-  std::vector<double> rewind_t;
-  std::vector<int> rewind_states;
-  std::vector<int> rewind_obscache;
+  double max_rewind_age;
+  std::deque<double> rewind_t;
+  std::deque<std::pair<Eigen::VectorXd, MatrixXdr>> rewind_states;
+  std::deque<Observation> rewind_obscache;
 
   Eigen::VectorXd augment_times;
 

@@ -111,7 +111,7 @@ cdef class EKF_sym:
     int dim_augment_err=0,
     list maha_test_kinds=[],
     list global_vars=[],
-    float max_rewind_age=1.0,
+    double max_rewind_age=1.0,
     logger=None):
     cdef np.ndarray[np.float64_t, ndim=2, mode='c'] Q_b = np.ascontiguousarray(Q, dtype=np.double)
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] x_initial_b = np.ascontiguousarray(x_initial, dtype=np.double)
