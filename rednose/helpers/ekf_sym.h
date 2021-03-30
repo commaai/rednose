@@ -5,13 +5,14 @@
 #include <string>
 #include <vector>
 #include <deque>
+#include <unordered_map>
 #include <map>
 #include <cmath>
 
 #include <eigen3/Eigen/Dense>
 
 extern "C" {  // TODO move to generation
-  #include "/home/batman/openpilot/selfdrive/locationd/models/generated/live.h"
+  #include "live.h"
 }
 
 #define REWIND_TO_KEEP 512

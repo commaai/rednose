@@ -113,6 +113,7 @@ cdef class EKF_sym:
     list global_vars=[],
     double max_rewind_age=1.0,
     logger=None):
+    # TODO logger
     cdef np.ndarray[np.float64_t, ndim=2, mode='c'] Q_b = np.ascontiguousarray(Q, dtype=np.double)
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] x_initial_b = np.ascontiguousarray(x_initial, dtype=np.double)
     cdef np.ndarray[np.float64_t, ndim=2, mode='c'] P_initial_b = np.ascontiguousarray(P_initial, dtype=np.double)
