@@ -61,8 +61,9 @@ cdef extern from "rednose/helpers/ekf_sym.h" namespace "EKFS":
     VectorXd get_state()
     MatrixXdr get_covs()
     double get_filter_time()
+    void normalize_state(int slice_start, int slice_end_ex)
 
-    void predict_and_update_batch(
+    Estimate predict_and_update_batch(
       double t,
       int kind,
       vector[MapVectorXd] z,
@@ -73,12 +74,14 @@ cdef extern from "rednose/helpers/ekf_sym.h" namespace "EKFS":
     # rts_smooth
     # normalize_quats
 
+# Functions like `numpy_to_matrix` are not possible, cython requires default
+# constructor for return variable types which aren't available with Eigen::Map
+
 @cython.wraparound(False)
 @cython.boundscheck(False)
 cdef np.ndarray[np.float64_t, ndim=2, mode="c"] matrix_to_numpy(MatrixXdr arr):
   cdef double[:,:] mem_view = <double[:arr.rows(),:arr.cols()]>arr.data()
-  cdef int itemsize = np.dtype(np.double).itemsize
-  return np.asarray(mem_view, dtype=np.double, order="C")
+  return np.copy(np.asarray(mem_view, dtype=np.double, order="C"))
 
   # cdef int size[2]
   # size[0] = arr.rows()
@@ -89,11 +92,7 @@ cdef np.ndarray[np.float64_t, ndim=2, mode="c"] matrix_to_numpy(MatrixXdr arr):
 @cython.boundscheck(False)
 cdef np.ndarray[np.float64_t, ndim=1, mode="c"] vector_to_numpy(VectorXd arr):
   cdef double[:] mem_view = <double[:arr.rows()]>arr.data()
-  cdef int itemsize = np.dtype(np.double).itemsize
-  return np.asarray(mem_view, dtype=np.double, order="C")
-  # cdef int size[1]
-  # size[0] = arr.rows()
-  # return np.PyArray_SimpleNewFromData(1, size, NPY_FLOAT64, <void*>arr.data())
+  return np.copy(np.asarray(mem_view, dtype=np.double, order="C"))
 
 cdef class EKF_sym:
   cdef EKFSym* ekf
@@ -102,7 +101,7 @@ cdef class EKF_sym:
     str gen_dir,
     str name,
     np.ndarray[np.float64_t, ndim=2] Q,
-    np.ndarray[np.float64_t] x_initial,
+    np.ndarray[np.float64_t, ndim=1] x_initial,
     np.ndarray[np.float64_t, ndim=2] P_initial,
     int dim_main,
     int dim_main_err,
@@ -145,13 +144,17 @@ cdef class EKF_sym:
     )
 
   def get_state(self):
-    return vector_to_numpy(self.ekf.get_state())
+    cdef np.ndarray res = vector_to_numpy(self.ekf.get_state())
+    return res
 
   def get_covs(self):
     return matrix_to_numpy(self.ekf.get_covs())
 
   def get_filter_time(self):
     return self.ekf.get_filter_time()
+
+  def normalize_state(self, int slice_start, int slice_end_ex):
+    return self.ekf.normalize_state(slice_start, slice_end_ex)
 
   def predict_and_update_batch(
     self,
@@ -181,19 +184,19 @@ cdef class EKF_sym:
         args_map.push_back(a)
       extra_args_map.push_back(args_map)
 
-    self.ekf.predict_and_update_batch(t, kind, z_map, R_map, extra_args_map, augment)
-    #cdef VectorXd tmpvec
-    #return (
-    #  ndarray_copy(res.xk1).flatten(),
-    #  ndarray_copy(res.xk).flatten(),
-    #  ndarray_copy(res.Pk1),
-    #  ndarray_copy(res.Pk),
-    #  res.t,
-    #  res.kind,
-    #  [ndarray_copy(tmpvec).flatten() for tmpvec in res.y],
-    #  [ndarray_copy(tmpvec).flatten() for tmpvec in res.z],
-    #  extra_args, # TODO take return
-    #)
+    cdef Estimate res = self.ekf.predict_and_update_batch(t, kind, z_map, R_map, extra_args_map, augment)
+    cdef VectorXd tmpvec
+    return (
+      vector_to_numpy(res.xk1),
+      vector_to_numpy(res.xk),
+      matrix_to_numpy(res.Pk1),
+      matrix_to_numpy(res.Pk),
+      res.t,
+      res.kind,
+      [vector_to_numpy(tmpvec) for tmpvec in res.y],
+      [vector_to_numpy(tmpvec) for tmpvec in res.z],
+      extra_args, # TODO take return
+    )
 
   def __dealloc__(self):
     del self.ekf

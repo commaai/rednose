@@ -55,8 +55,9 @@ public:
   Eigen::VectorXd get_state();
   MatrixXdr get_covs();
   double get_filter_time();
+  void normalize_state(int slice_start, int slice_end_ex);
 
-  void predict_and_update_batch(
+  Estimate predict_and_update_batch(
     double t,
     int kind,
     std::vector<Eigen::Map<Eigen::VectorXd> > z,

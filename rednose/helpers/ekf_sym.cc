@@ -72,7 +72,7 @@ EKFSym::EKFSym(
   this->h_dfuns[32] = h_32;
 
   this->H_dfuns[3] = H_3;
-  this->H_dfuns[4] = &H_4;
+  this->H_dfuns[4] = H_4;
   this->H_dfuns[9] = H_9;
   this->H_dfuns[10] = H_10;
   this->H_dfuns[12] = H_12;
@@ -147,6 +147,10 @@ double EKFSym::get_filter_time() {
   return this->filter_time;
 }
 
+void EKFSym::normalize_state(int slice_start, int slice_end_ex) {
+  this->x.block(slice_start, 0, slice_end_ex - slice_start, this->x.cols()).normalize();
+}
+
 void EKFSym::reset_rewind() {
   this->rewind_obscache.clear();
   this->rewind_t.clear();
@@ -192,13 +196,13 @@ void EKFSym::_predict(double t) {
   // predict
   double dt = t - this->filter_time;
   assert(dt >= 0.0);
-  std::pair<VectorXd, MatrixXdr>  res = this->_predict(this->x, this->P, dt);
+  std::pair<VectorXd, MatrixXdr> res = this->_predict(this->x, this->P, dt);
   this->x = res.first;
   this->P = res.second;
   this->filter_time = t;
 }
 
-void EKFSym::predict_and_update_batch(
+Estimate EKFSym::predict_and_update_batch(
   double t,
   int kind,
   std::vector<Map<VectorXd> > z_map,
@@ -234,7 +238,7 @@ void EKFSym::predict_and_update_batch(
   /*for r in rewound:
     self._predict_and_update_batch(*r)*/
 
-  //return ret;
+  return ret;
 }
 
 Estimate EKFSym::_predict_and_update_batch(
