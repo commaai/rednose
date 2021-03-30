@@ -202,7 +202,8 @@ void EKFSym::_predict(double t) {
   this->filter_time = t;
 }
 
-Estimate EKFSym::predict_and_update_batch(
+bool EKFSym::predict_and_update_batch(
+  Estimate* res,
   double t,
   int kind,
   std::vector<Map<VectorXd> > z_map,
@@ -221,27 +222,29 @@ Estimate EKFSym::predict_and_update_batch(
 
   // TODO handle rewinding at this level
 
-  /*// rewind
+  // rewind
   if (!std::isnan(this->filter_time) && t < this->filter_time) {
     if (this->rewind_t.size() == 0 || t < this->rewind_t[0] || t < this->rewind_t[this->rewind_t.size()-1] - this->max_rewind_age) {
-      self.logger.error("observation too old at %.3f with filter at %.3f, ignoring" % (t, self.filter_time))
-      return;
+      std::cout << "observation too old at " << t << " with filter at " << this->filter_time << ", ignoring" << std::endl;
+      // TODO self.logger.error("observation too old at %.3f with filter at %.3f, ignoring" % (t, self.filter_time))
+      return false;
     }
-    rewound = self.rewind(t)
+    //rewound = self.rewind(t)
   } else {
-    rewound = []
-  }*/
+    //rewound = []
+  }
 
-  Estimate ret = this->_predict_and_update_batch(t, kind, z, R, extra_args, augment);
+  this->_predict_and_update_batch(res, t, kind, z, R, extra_args, augment);
 
   // optional fast forward
   /*for r in rewound:
     self._predict_and_update_batch(*r)*/
 
-  return ret;
+  return true;
 }
 
-Estimate EKFSym::_predict_and_update_batch(
+void EKFSym::_predict_and_update_batch(
+  Estimate* res,
   double t,
   int kind,
   std::vector<VectorXd> z,
@@ -279,7 +282,16 @@ Estimate EKFSym::_predict_and_update_batch(
   // checkpoint TODO rewind
   //this->checkpoint((t, kind, z, R, extra_args))
 
-  return { xk_km1, xk_k, Pk_km1, Pk_k, t, kind, y, z, extra_args };
+  res->xk1 = xk_km1;
+  res->xk = xk_k;
+  res->Pk1 = Pk_km1;
+  res->Pk = Pk_k;
+  res->t = t;
+  res->kind = kind;
+  res->y = y;
+  res->z = z;
+  res->extra_args = extra_args;
+  //return { xk_km1, xk_k, Pk_km1, Pk_k, t, kind, y, z, extra_args };
 }
 
 bool EKFSym::maha_test(VectorXd x, MatrixXdr P, int kind, VectorXd z, MatrixXdr R, std::vector<double> extra_args, double maha_thresh) {

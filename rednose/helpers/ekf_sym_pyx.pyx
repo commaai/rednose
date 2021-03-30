@@ -63,7 +63,8 @@ cdef extern from "rednose/helpers/ekf_sym.h" namespace "EKFS":
     double get_filter_time()
     void normalize_state(int slice_start, int slice_end_ex)
 
-    Estimate predict_and_update_batch(
+    bool predict_and_update_batch(
+      Estimate* res,
       double t,
       int kind,
       vector[MapVectorXd] z,
@@ -184,7 +185,10 @@ cdef class EKF_sym:
         args_map.push_back(a)
       extra_args_map.push_back(args_map)
 
-    cdef Estimate res = self.ekf.predict_and_update_batch(t, kind, z_map, R_map, extra_args_map, augment)
+    cdef Estimate res
+    if not self.ekf.predict_and_update_batch(&res, t, kind, z_map, R_map, extra_args_map, augment):
+      return None
+
     cdef VectorXd tmpvec
     return (
       vector_to_numpy(res.xk1),

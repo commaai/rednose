@@ -57,7 +57,8 @@ public:
   double get_filter_time();
   void normalize_state(int slice_start, int slice_end_ex);
 
-  Estimate predict_and_update_batch(
+  bool predict_and_update_batch(
+    Estimate* res,
     double t,
     int kind,
     std::vector<Eigen::Map<Eigen::VectorXd> > z,
@@ -73,7 +74,8 @@ private:
   std::vector<int> rewind(double t);
   void checkpoint(int obs);
   void _predict(double t);
-  Estimate _predict_and_update_batch(
+  void _predict_and_update_batch(
+    Estimate* res,
     double t,
     int kind,
     std::vector<Eigen::VectorXd> z_map,
