@@ -1,4 +1,5 @@
 # cython: language_level=3
+# cython: profile=True
 # distutils: language = c++
 
 cimport cython
@@ -199,8 +200,8 @@ cdef class EKF_sym:
       res.t,
       res.kind,
       [vector_to_numpy(tmpvec) for tmpvec in res.y],
-      [vector_to_numpy(tmpvec) for tmpvec in res.z],
-      extra_args, # TODO take return
+      z,  # TODO: take return values?
+      extra_args,
     )
 
   def __dealloc__(self):

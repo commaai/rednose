@@ -45,9 +45,9 @@ class EKFSym {
 public:
   EKFSym(
     std::string name,
-    MatrixXdr Q,
-    Eigen::VectorXd x_initial,
-    MatrixXdr P_initial,
+    Eigen::Map<MatrixXdr> Q,
+    Eigen::Map<Eigen::VectorXd> x_initial,
+    Eigen::Map<MatrixXdr> P_initial,
     int dim_main,
     int dim_main_err,
     int N = 0,
@@ -58,11 +58,7 @@ public:
     double max_rewind_age = 1.0
   );
 
-  void init_state(
-    Eigen::VectorXd state,
-    MatrixXdr covs,
-    double filter_time
-  );
+  void init_state(Eigen::Map<Eigen::VectorXd> state, Eigen::Map<MatrixXdr> covs, double filter_time);
 
   Eigen::VectorXd get_state();
   MatrixXdr get_covs();
@@ -73,20 +69,22 @@ public:
     Estimate* res,
     double t,
     int kind,
-    std::vector<Eigen::Map<Eigen::VectorXd> > z,
-    std::vector<Eigen::Map<MatrixXdr> > R,
+    std::vector<Eigen::Map<Eigen::VectorXd>> z,
+    std::vector<Eigen::Map<MatrixXdr>> R,
     std::vector<std::vector<double>> extra_args,
     bool augment = false
   );
 
 private:
   void reset_rewind();
-  void augment();
-
   void rewind(double t, std::deque<Observation>& rewound);
-  void checkpoint(Observation obs);
+  void checkpoint(Observation& obs);
+
+  void predict_and_update_batch(Estimate* res, Observation& obs, bool augment);
   void _predict(double t);
-  void _predict_and_update_batch(Estimate* res, Observation obs, bool augment);
+  Eigen::VectorXd update(int kind, Eigen::VectorXd z, MatrixXdr R, std::vector<double> extra_args);
+
+  void augment();
 
   bool maha_test(
     Eigen::VectorXd x,
@@ -94,25 +92,11 @@ private:
     int kind,
     Eigen::VectorXd z,
     MatrixXdr R,
-    std::vector<double> extra_args = std::vector<double>(),
+    std::vector<double> extra_args,
     double maha_thresh = 0.95
   );
 
   MatrixXdr rts_smooth(std::vector<Estimate> estimates, bool norm_quats = false);
-
-  std::pair<Eigen::VectorXd, MatrixXdr> _predict(
-    Eigen::VectorXd x,
-    MatrixXdr P,
-    double dt
-  );
-  std::tuple<Eigen::VectorXd, MatrixXdr, Eigen::VectorXd> _update(
-    Eigen::VectorXd x,
-    MatrixXdr P,
-    int kind,
-    Eigen::VectorXd z,
-    MatrixXdr R,
-    std::vector<double> extra_args = std::vector<double>()
-  );
 
   static double chi2_ppf(double thres, int dim);
 
