@@ -16,17 +16,17 @@ struct EKF {
   std::vector<int> kinds;
   std::vector<int> feature_kinds;
 
-  void (*f_dfun)(double *, double, double *);
-  void (*F_dfun)(double *, double, double *);
-  void (*err_dfun)(double *, double *, double *);
-  void (*inv_err_dfun)(double *, double *, double *);
-  void (*H_mod_dfun)(double *, double *);
-  void (*predict_dfun)(double *, double *, double *, double);
-  std::unordered_map<int, void (*)(double *, double *, double *)> h_dfuns = {};
-  std::unordered_map<int, void (*)(double *, double *, double *)> H_dfuns = {};
-  std::unordered_map<int, void (*)(double *, double *, double *)> He_dfuns = {};
-  std::unordered_map<int, void (*)(double *, double *, double *, double *, double *)> update_dfuns = {};
-  std::unordered_map<std::string, void (*)(double)> set_global_dfuns = {};
+  void (*f_fun)(double *, double, double *);
+  void (*F_fun)(double *, double, double *);
+  void (*err_fun)(double *, double *, double *);
+  void (*inv_err_fun)(double *, double *, double *);
+  void (*H_mod_fun)(double *, double *);
+  void (*predict)(double *, double *, double *, double);
+  std::unordered_map<int, void (*)(double *, double *, double *)> hs = {};
+  std::unordered_map<int, void (*)(double *, double *, double *)> Hs = {};
+  std::unordered_map<int, void (*)(double *, double *, double *)> Hes = {};
+  std::unordered_map<int, void (*)(double *, double *, double *, double *, double *)> updates = {};
+  std::unordered_map<std::string, void (*)(double)> sets = {};
 };
 
 std::vector<const EKF*>& get_ekfs();

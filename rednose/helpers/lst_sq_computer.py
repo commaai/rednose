@@ -50,6 +50,7 @@ class LstSqComputer():
     sympy_functions = generate_residual(K)
     header, code = sympy_into_c(sympy_functions)
 
+    code = "\n#include \"rednose/helpers/common_ekf.h\"\n" + code
     code += "\n#define KDIM %d\n" % K
     code += "\n" + open(os.path.join(TEMPLATE_DIR, "compute_pos.c")).read()
 

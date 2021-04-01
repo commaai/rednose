@@ -2,7 +2,7 @@ from typing import Any, Dict
 
 import numpy as np
 
-from rednose.helpers.ekf_sym_old import EKF_sym
+from rednose.helpers.ekf_sym_py import EKF_sym
 
 
 class KalmanFilter:

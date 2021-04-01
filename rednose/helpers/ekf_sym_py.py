@@ -26,136 +26,6 @@ def null(H, eps=1e-12):
   return np.transpose(null_space)
 
 
-def gen_code(folder, name, f_sym, dt_sym, x_sym, obs_eqs, dim_x, dim_err, eskf_params=None, msckf_params=None,  # pylint: disable=dangerous-default-value
-             maha_test_kinds=[], global_vars=None):
-  # optional state transition matrix, H modifier
-  # and err_function if an error-state kalman filter (ESKF)
-  # is desired. Best described in "Quaternion kinematics
-  # for the error-state Kalman filter" by Joan Sola
-
-  if eskf_params:
-    err_eqs = eskf_params[0]
-    inv_err_eqs = eskf_params[1]
-    H_mod_sym = eskf_params[2]
-    f_err_sym = eskf_params[3]
-    x_err_sym = eskf_params[4]
-  else:
-    nom_x = sp.MatrixSymbol('nom_x', dim_x, 1)
-    true_x = sp.MatrixSymbol('true_x', dim_x, 1)
-    delta_x = sp.MatrixSymbol('delta_x', dim_x, 1)
-    err_function_sym = sp.Matrix(nom_x + delta_x)
-    inv_err_function_sym = sp.Matrix(true_x - nom_x)
-    err_eqs = [err_function_sym, nom_x, delta_x]
-    inv_err_eqs = [inv_err_function_sym, nom_x, true_x]
-
-    H_mod_sym = sp.Matrix(np.eye(dim_x))
-    f_err_sym = f_sym
-    x_err_sym = x_sym
-
-  # This configures the multi-state augmentation
-  # needed for EKF-SLAM with MSCKF (Mourikis et al 2007)
-  if msckf_params:
-    msckf = True
-    dim_main = msckf_params[0]      # size of the main state
-    dim_augment = msckf_params[1]   # size of one augment state chunk
-    dim_main_err = msckf_params[2]
-    dim_augment_err = msckf_params[3]
-    N = msckf_params[4]
-    feature_track_kinds = msckf_params[5]
-    assert dim_main + dim_augment * N == dim_x
-    assert dim_main_err + dim_augment_err * N == dim_err
-  else:
-    msckf = False
-    dim_main = dim_x
-    dim_augment = 0
-    dim_main_err = dim_err
-    dim_augment_err = 0
-    N = 0
-
-  # linearize with jacobians
-  F_sym = f_err_sym.jacobian(x_err_sym)
-
-  if eskf_params:
-    for sym in x_err_sym:
-      F_sym = F_sym.subs(sym, 0)
-
-  assert dt_sym in F_sym.free_symbols
-
-  for i in range(len(obs_eqs)):
-    obs_eqs[i].append(obs_eqs[i][0].jacobian(x_sym))
-    if msckf and obs_eqs[i][1] in feature_track_kinds:
-      obs_eqs[i].append(obs_eqs[i][0].jacobian(obs_eqs[i][2]))
-    else:
-      obs_eqs[i].append(None)
-
-  # collect sympy functions
-  sympy_functions = []
-
-  # error functions
-  sympy_functions.append(('err_fun', err_eqs[0], [err_eqs[1], err_eqs[2]]))
-  sympy_functions.append(('inv_err_fun', inv_err_eqs[0], [inv_err_eqs[1], inv_err_eqs[2]]))
-
-  # H modifier for ESKF updates
-  sympy_functions.append(('H_mod_fun', H_mod_sym, [x_sym]))
-
-  # state propagation function
-  sympy_functions.append(('f_fun', f_sym, [x_sym, dt_sym]))
-  sympy_functions.append(('F_fun', F_sym, [x_sym, dt_sym]))
-
-  # observation functions
-  for h_sym, kind, ea_sym, H_sym, He_sym in obs_eqs:
-    sympy_functions.append(('h_%d' % kind, h_sym, [x_sym, ea_sym]))
-    sympy_functions.append(('H_%d' % kind, H_sym, [x_sym, ea_sym]))
-    if msckf and kind in feature_track_kinds:
-      sympy_functions.append(('He_%d' % kind, He_sym, [x_sym, ea_sym]))
-
-  # Generate and wrap all th c code
-  header, code = sympy_into_c(sympy_functions, global_vars)
-  extra_header = "#define DIM %d\n" % dim_x
-  extra_header += "#define EDIM %d\n" % dim_err
-  extra_header += "#define MEDIM %d\n" % dim_main_err
-  extra_header += "typedef void (*Hfun)(double *, double *, double *);\n"
-
-  extra_header += "\nvoid predict(double *x, double *P, double *Q, double dt);"
-
-  extra_post = ""
-
-  for h_sym, kind, ea_sym, H_sym, He_sym in obs_eqs:
-    if msckf and kind in feature_track_kinds:
-      He_str = 'He_%d' % kind
-      # ea_dim = ea_sym.shape[0]
-    else:
-      He_str = 'NULL'
-      # ea_dim = 1 # not really dim of ea but makes c function work
-    maha_thresh = chi2_ppf(0.95, int(h_sym.shape[0]))  # mahalanobis distance for outlier detection
-    maha_test = kind in maha_test_kinds
-    extra_post += """
-      void update_%d(double *in_x, double *in_P, double *in_z, double *in_R, double *in_ea) {
-        update<%d,%d,%d>(in_x, in_P, h_%d, H_%d, %s, in_z, in_R, in_ea, MAHA_THRESH_%d);
-      }
-    """ % (kind, h_sym.shape[0], 3, maha_test, kind, kind, He_str, kind)
-    extra_header += "\nconst static double MAHA_THRESH_%d = %f;" % (kind, maha_thresh)
-    extra_header += "\nvoid update_%d(double *, double *, double *, double *, double *);" % kind
-
-  code += '\nextern "C"{\n' + extra_header + "\n}\n"
-  code += "\n" + open(os.path.join(TEMPLATE_DIR, "ekf_c.c")).read()
-  code += '\nextern "C"{\n' + extra_post + "\n}\n"
-
-  if global_vars is not None:
-    global_code = '\nextern "C"{\n'
-    for var in global_vars:
-      global_code += f"\ndouble {var.name};\n"
-      global_code += f"\nvoid set_{var.name}(double x){{ {var.name} = x;}}\n"
-      extra_header += f"\nvoid set_{var.name}(double x);\n"
-
-    global_code += '\n}\n'
-    code = global_code + code
-
-  header += "\n" + extra_header
-
-  write_code(folder, name, code, header)
-
-
 class EKF_sym():
   def __init__(self, folder, name, Q, x_initial, P_initial, dim_main, dim_main_err,  # pylint: disable=dangerous-default-value
                N=0, dim_augment=0, dim_augment_err=0, maha_test_kinds=[], global_vars=None, max_rewind_age=1.0, logger=logging):
@@ -193,25 +63,25 @@ class EKF_sym():
     self.rewind_obscache = []
     self.init_state(x_initial, P_initial, None)
 
-    ffi, lib = load_code(folder, name)
+    ffi, lib = load_code(folder, name, "kf")
     kinds, self.feature_track_kinds = [], []
     for func in dir(lib):
-      if func[:2] == 'h_':
-        kinds.append(int(func[2:]))
-      if func[:3] == 'He_':
-        self.feature_track_kinds.append(int(func[3:]))
+      if func[:len(name) + 3] == f'{name}_h_':
+        kinds.append(int(func[len(name) + 3:]))
+      if func[:len(name) + 4] == f'{name}_He_':
+        self.feature_track_kinds.append(int(func[len(name) + 4:]))
 
     # wrap all the sympy functions
-    def wrap_1lists(name):
-      func = eval("lib.%s" % name, {"lib": lib})  # pylint: disable=eval-used
+    def wrap_1lists(func_name):
+      func = eval(f"lib.{name}_{func_name}", {"lib": lib})  # pylint: disable=eval-used
 
       def ret(lst1, out):
         func(ffi.cast("double *", lst1.ctypes.data),
              ffi.cast("double *", out.ctypes.data))
       return ret
 
-    def wrap_2lists(name):
-      func = eval("lib.%s" % name, {"lib": lib})  # pylint: disable=eval-used
+    def wrap_2lists(func_name):
+      func = eval(f"lib.{name}_{func_name}", {"lib": lib})  # pylint: disable=eval-used
 
       def ret(lst1, lst2, out):
         func(ffi.cast("double *", lst1.ctypes.data),
@@ -219,8 +89,8 @@ class EKF_sym():
              ffi.cast("double *", out.ctypes.data))
       return ret
 
-    def wrap_1list_1float(name):
-      func = eval("lib.%s" % name, {"lib": lib})  # pylint: disable=eval-used
+    def wrap_1list_1float(func_name):
+      func = eval(f"lib.{name}_{func_name}", {"lib": lib})  # pylint: disable=eval-used
 
       def ret(lst1, fl, out):
         func(ffi.cast("double *", lst1.ctypes.data),
@@ -237,53 +107,15 @@ class EKF_sym():
 
     self.hs, self.Hs, self.Hes = {}, {}, {}
     for kind in kinds:
-      self.hs[kind] = wrap_2lists("h_%d" % kind)
-      self.Hs[kind] = wrap_2lists("H_%d" % kind)
+      self.hs[kind] = wrap_2lists(f"h_{kind}")
+      self.Hs[kind] = wrap_2lists(f"H_{kind}")
       if self.msckf and kind in self.feature_track_kinds:
-        self.Hes[kind] = wrap_2lists("He_%d" % kind)
+        self.Hes[kind] = wrap_2lists(f"He_{kind}")
 
     if self.global_vars is not None:
       for var in self.global_vars:
-        fun_name = f"set_{var.name}"
+        fun_name = f"{name}_set_{var.name}"
         setattr(self, fun_name, getattr(lib, fun_name))
-
-    # wrap the C++ predict function
-    def _predict_blas(x, P, dt):
-      lib.predict(ffi.cast("double *", x.ctypes.data),
-                  ffi.cast("double *", P.ctypes.data),
-                  ffi.cast("double *", self.Q.ctypes.data),
-                  ffi.cast("double", dt))
-      return x, P
-
-    # wrap the C++ update function
-    def fun_wrapper(f, kind):
-      f = eval("lib.%s" % f, {"lib": lib})  # pylint: disable=eval-used
-
-      def _update_inner_blas(x, P, z, R, extra_args):
-        f(ffi.cast("double *", x.ctypes.data),
-          ffi.cast("double *", P.ctypes.data),
-          ffi.cast("double *", z.ctypes.data),
-          ffi.cast("double *", R.ctypes.data),
-          ffi.cast("double *", extra_args.ctypes.data))
-        if self.msckf and kind in self.feature_track_kinds:
-          y = z[:-len(extra_args)]
-        else:
-          y = z
-        return x, P, y
-      return _update_inner_blas
-
-    self._updates = {}
-    for kind in kinds:
-      self._updates[kind] = fun_wrapper("update_%d" % kind, kind)
-
-    def _update_blas(x, P, kind, z, R, extra_args=[]):  # pylint: disable=dangerous-default-value
-        return self._updates[kind](x, P, z, R, extra_args)
-
-    # assign the functions
-    self._predict = _predict_blas
-    # self._predict = self._predict_python
-    self._update = _update_blas
-    # self._update = self._update_python
 
   def init_state(self, state, covs, filter_time):
     self.x = np.array(state.reshape((-1, 1))).astype(np.float64)
@@ -327,11 +159,17 @@ class EKF_sym():
     self.augment_times.append(self.filter_time)
     assert self.P.shape == (self.dim_err, self.dim_err)
 
-  def state(self):
+  def get_state(self):
     return np.array(self.x).flatten()
 
-  def covs(self):
+  def get_covs(self):
     return self.P
+
+  def get_filter_time(self):
+    return self.filter_time
+
+  def normalize_state(self, slice_start, slice_end_ex):
+    self.x[slice_start:slice_end_ex] /= np.linalg.norm(self.x[slice_start:slice_end_ex])
 
   def rewind(self, t):
     # find where we are rewinding to
@@ -401,11 +239,9 @@ class EKF_sym():
   def _predict_and_update_batch(self, t, kind, z, R, extra_args, augment=False):
     """The main kalman filter function
     Predicts the state and then updates a batch of observations
-
     dim_x: dimensionality of the state space
     dim_z: dimensionality of the observation and depends on kind
     n: number of observations
-
     Args:
       t                 (float): Time of observation
       kind                (int): Type of observation
@@ -448,7 +284,7 @@ class EKF_sym():
 
     return xk_km1, xk_k, Pk_km1, Pk_k, t, kind, y, z, extra_args
 
-  def _predict_python(self, x, P, dt):
+  def _predict(self, x, P, dt):
     x_new = np.zeros(x.shape, dtype=np.float64)
     self.f(x, dt, x_new)
 
@@ -476,7 +312,7 @@ class EKF_sym():
     P += dt * self.Q
     return x_new, P
 
-  def _update_python(self, x, P, kind, z, R, extra_args=[]):  # pylint: disable=dangerous-default-value
+  def _update(self, x, P, kind, z, R, extra_args=[]):  # pylint: disable=dangerous-default-value
     # init vars
     z = z.reshape((-1, 1))
     h = np.zeros(z.shape, dtype=np.float64)
@@ -570,7 +406,6 @@ class EKF_sym():
     '''
     Returns rts smoothed results of
     kalman filter estimates
-
     If the kalman state is augmented with
     old states only the main state is smoothed
     '''

@@ -197,12 +197,12 @@ void EKFSym::_predict(double t) {
   double dt = t - this->filter_time;
   assert(dt >= 0.0);
 
-  this->ekf->predict_dfun(this->x.data(), this->P.data(), this->Q.data(), dt);
+  this->ekf->predict(this->x.data(), this->P.data(), this->Q.data(), dt);
   this->filter_time = t;
 }
 
 VectorXd EKFSym::update(int kind, VectorXd z, MatrixXdr R, std::vector<double> extra_args) {
-  this->ekf->update_dfuns.at(kind)(this->x.data(), this->P.data(), z.data(), R.data(), extra_args.data());
+  this->ekf->updates.at(kind)(this->x.data(), this->P.data(), z.data(), R.data(), extra_args.data());
 
   if (this->msckf && std::find(this->feature_track_kinds.begin(), this->feature_track_kinds.end(), kind) != this->feature_track_kinds.end()) {
     return z.head(z.rows() - extra_args.size());
@@ -246,15 +246,15 @@ bool EKFSym::maha_test(VectorXd x, MatrixXdr P, int kind, VectorXd z, MatrixXdr 
   MatrixXdr H = MatrixXdr::Zero(z.rows(), this->dim_x);
 
   // C functions
-  this->ekf->h_dfuns.at(kind)(x.data(), extra_args.data(), h.data());
-  this->ekf->H_dfuns.at(kind)(x.data(), extra_args.data(), H.data());
+  this->ekf->hs.at(kind)(x.data(), extra_args.data(), h.data());
+  this->ekf->Hs.at(kind)(x.data(), extra_args.data(), H.data());
 
   // y is the "loss"
   VectorXd y = z - h;
 
   // if using eskf
   MatrixXdr H_mod = MatrixXdr::Zero(x.rows(), P.rows());
-  this->ekf->H_mod_dfun(x.data(), H_mod.data());
+  this->ekf->H_mod_fun(x.data(), H_mod.data());
   H = H * H_mod;
 
   MatrixXdr a = ((H * P) * H.transpose() + R).inverse();
@@ -289,7 +289,7 @@ MatrixXdr EKFSym::rts_smooth(std::vector<Estimate> estimates, bool norm_quats) {
     MatrixXdr Pk_k = estimates[k + 1].Pk;
     double t1 = estimates[k + 1].t;
     double dt = t2 - t1;
-    this->ekf->F_dfun(xk_k.data(), dt, Fk_1.data());
+    this->ekf->F_fun(xk_k.data(), dt, Fk_1.data());
 
     // TODO:
     /*
