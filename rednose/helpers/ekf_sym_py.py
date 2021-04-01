@@ -51,8 +51,6 @@ class EKF_sym():
     # tested for outlier rejection
     self.maha_test_kinds = maha_test_kinds
 
-    self.global_vars = global_vars
-
     # process noise
     self.Q = Q
 
@@ -112,9 +110,10 @@ class EKF_sym():
       if self.msckf and kind in self.feature_track_kinds:
         self.Hes[kind] = wrap_2lists(f"He_{kind}")
 
-    if self.global_vars is not None:
-      for var in self.global_vars:
-        setattr(self, f"set_{var.name}", getattr(lib, f"{name}_set_{var.name}"))
+    self.set_globals = {}
+    if global_vars is not None:
+      for global_var in global_vars:
+        self.set_globals[global_var] = getattr(lib, f"{name}_set_{global_var}")
 
   def init_state(self, state, covs, filter_time):
     self.x = np.array(state.reshape((-1, 1))).astype(np.float64)
@@ -164,6 +163,9 @@ class EKF_sym():
   def get_covs(self):
     return self.P
 
+  def set_filter_time(self, t):
+    self.filter_time = t
+
   def get_filter_time(self):
     return self.filter_time
 
@@ -172,6 +174,9 @@ class EKF_sym():
 
   def get_augment_times(self):
     return self.augment_times
+
+  def set_global(self, global_var, val):
+    self.set_globals[global_var](val)
 
   def rewind(self, t):
     # find where we are rewinding to

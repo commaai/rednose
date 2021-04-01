@@ -65,12 +65,20 @@ MatrixXdr EKFSym::get_covs() {
   return this->P;
 }
 
+void EKFSym::set_filter_time(double t) {
+  this->filter_time = t;
+}
+
 double EKFSym::get_filter_time() {
   return this->filter_time;
 }
 
 void EKFSym::normalize_state(int slice_start, int slice_end_ex) {
   this->x.block(slice_start, 0, slice_end_ex - slice_start, this->x.cols()).normalize();
+}
+
+void EKFSym::set_global(std::string global_var, double val) {
+  this->ekf->sets.at(global_var)(val);
 }
 
 bool EKFSym::predict_and_update_batch(
@@ -152,7 +160,7 @@ void EKFSym::checkpoint(Observation& obs) {
 void EKFSym::predict_and_update_batch(Estimate* res, Observation& obs, bool augment) {
   assert(obs.z.size() == obs.R.size());
 
-  this->_predict(obs.t);
+  this->predict(obs.t);
 
   if (res != NULL) {
     res->t = obs.t;
@@ -187,7 +195,7 @@ void EKFSym::predict_and_update_batch(Estimate* res, Observation& obs, bool augm
   this->checkpoint(obs);
 }
 
-void EKFSym::_predict(double t) {
+void EKFSym::predict(double t) {
   // initialize time
   if (std::isnan(this->filter_time)) {
     this->filter_time = t;

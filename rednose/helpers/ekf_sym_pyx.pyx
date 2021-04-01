@@ -3,6 +3,7 @@
 # distutils: language = c++
 
 cimport cython
+
 from libcpp.string cimport string
 from libcpp.vector cimport vector
 from libcpp cimport bool
@@ -61,10 +62,13 @@ cdef extern from "rednose/helpers/ekf_sym.h" namespace "EKFS":
 
     VectorXd get_state()
     MatrixXdr get_covs()
+    void set_filter_time(double t)
     double get_filter_time()
-
     void normalize_state(int slice_start, int slice_end_ex)
+    void set_global(string name, double val)
+    void reset_rewind()
 
+    void predict(double t)
     bool predict_and_update_batch(
       Estimate* res,
       double t,
@@ -77,7 +81,6 @@ cdef extern from "rednose/helpers/ekf_sym.h" namespace "EKFS":
     # TODO
     # augment
     # get_augment_times
-    # predict
     # rts_smooth
     # maha_test
 
@@ -89,11 +92,6 @@ cdef extern from "rednose/helpers/ekf_sym.h" namespace "EKFS":
 cdef np.ndarray[np.float64_t, ndim=2, mode="c"] matrix_to_numpy(MatrixXdr arr):
   cdef double[:,:] mem_view = <double[:arr.rows(),:arr.cols()]>arr.data()
   return np.copy(np.asarray(mem_view, dtype=np.double, order="C"))
-
-  # cdef int size[2]
-  # size[0] = arr.rows()
-  # size[1] = arr.cols()
-  # return np.PyArray_SimpleNewFromData(2, size, np.double, <void*>arr.data())
 
 @cython.wraparound(False)
 @cython.boundscheck(False)
@@ -121,9 +119,6 @@ cdef class EKF_sym:
     logger=None):
     # TODO logger
 
-    for global_var in global_vars:
-      setattr(self, f"set_{global_var}", lambda x: self.set_global(global_var, x))
-
     cdef np.ndarray[np.float64_t, ndim=2, mode='c'] Q_b = np.ascontiguousarray(Q, dtype=np.double)
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] x_initial_b = np.ascontiguousarray(x_initial, dtype=np.double)
     cdef np.ndarray[np.float64_t, ndim=2, mode='c'] P_initial_b = np.ascontiguousarray(P_initial, dtype=np.double)
@@ -138,15 +133,11 @@ cdef class EKF_sym:
       dim_augment,
       dim_augment_err,
       maha_test_kinds,
-      global_vars,
+      [x.encode('utf8') for x in global_vars],
       max_rewind_age
     )
 
-  def init_state(
-    self,
-    np.ndarray[np.float64_t, ndim=1] state,
-    np.ndarray[np.float64_t, ndim=2] covs,
-    filter_time):
+  def init_state(self, np.ndarray[np.float64_t, ndim=1] state, np.ndarray[np.float64_t, ndim=2] covs, filter_time):
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] state_b = np.ascontiguousarray(state, dtype=np.double)
     cdef np.ndarray[np.float64_t, ndim=2, mode='c'] covs_b = np.ascontiguousarray(covs, dtype=np.double)
     self.ekf.init_state(
@@ -162,20 +153,25 @@ cdef class EKF_sym:
   def get_covs(self):
     return matrix_to_numpy(self.ekf.get_covs())
 
+  def set_filter_time(self, double t):
+    self.ekf.set_filter_time(t)
+
   def get_filter_time(self):
     return self.ekf.get_filter_time()
 
   def normalize_state(self, int slice_start, int slice_end_ex):
     return self.ekf.normalize_state(slice_start, slice_end_ex)
 
-  def predict_and_update_batch(
-    self,
-    double t,
-    int kind,
-    z,
-    R,
-    extra_args=[[]],
-    bool augment=False):
+  def set_global(self, str global_var, double val):
+    self.ekf.set_global(global_var.encode('utf8'), val)
+
+  def reset_rewind(self):
+    self.ekf.reset_rewind()
+
+  def predict(self, double t):
+    self.ekf.predict(t)
+
+  def predict_and_update_batch(self, double t, int kind, z, R, extra_args=[[]], bool augment=False):
     cdef vector[MapVectorXd] z_map
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] zi_b
     for zi in z:
@@ -219,16 +215,10 @@ cdef class EKF_sym:
   def get_augment_times(self):
     raise NotImplementedError()  # TODO
 
-  def predict(self, t):
-    raise NotImplementedError()  # TODO
-
   def rts_smooth(self, estimates, norm_quats=False):
     raise NotImplementedError()  # TODO
 
   def maha_test(self, x, P, kind, z, R, extra_args=[], maha_thresh=0.95):
-    raise NotImplementedError()  # TODO
-
-  def set_global(self, global_var, x):
     raise NotImplementedError()  # TODO
 
   def __dealloc__(self):

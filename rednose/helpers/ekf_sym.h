@@ -60,9 +60,13 @@ public:
 
   Eigen::VectorXd get_state();
   MatrixXdr get_covs();
+  void set_filter_time(double t);
   double get_filter_time();
   void normalize_state(int slice_start, int slice_end_ex);
+  void set_global(std::string global_var, double val);
+  void reset_rewind();
 
+  void predict(double t);
   bool predict_and_update_batch(
     Estimate* res,
     double t,
@@ -74,12 +78,10 @@ public:
   );
 
 private:
-  void reset_rewind();
   void rewind(double t, std::deque<Observation>& rewound);
   void checkpoint(Observation& obs);
 
   void predict_and_update_batch(Estimate* res, Observation& obs, bool augment);
-  void _predict(double t);
   Eigen::VectorXd update(int kind, Eigen::VectorXd z, MatrixXdr R, std::vector<double> extra_args);
 
   void augment();
