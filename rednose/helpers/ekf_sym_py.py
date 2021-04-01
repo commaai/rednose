@@ -114,8 +114,7 @@ class EKF_sym():
 
     if self.global_vars is not None:
       for var in self.global_vars:
-        fun_name = f"{name}_set_{var.name}"
-        setattr(self, fun_name, getattr(lib, fun_name))
+        setattr(self, f"set_{var.name}", getattr(lib, f"{name}_set_{var.name}"))
 
   def init_state(self, state, covs, filter_time):
     self.x = np.array(state.reshape((-1, 1))).astype(np.float64)
@@ -170,6 +169,9 @@ class EKF_sym():
 
   def normalize_state(self, slice_start, slice_end_ex):
     self.x[slice_start:slice_end_ex] /= np.linalg.norm(self.x[slice_start:slice_end_ex])
+
+  def get_augment_times(self):
+    return self.augment_times
 
   def rewind(self, t):
     # find where we are rewinding to

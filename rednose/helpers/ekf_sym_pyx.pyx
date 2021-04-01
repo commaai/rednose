@@ -120,6 +120,10 @@ cdef class EKF_sym:
     double max_rewind_age=1.0,
     logger=None):
     # TODO logger
+
+    for global_var in global_vars:
+      setattr(self, f"set_{global_var}", lambda x: self.set_global(global_var, x))
+
     cdef np.ndarray[np.float64_t, ndim=2, mode='c'] Q_b = np.ascontiguousarray(Q, dtype=np.double)
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] x_initial_b = np.ascontiguousarray(x_initial, dtype=np.double)
     cdef np.ndarray[np.float64_t, ndim=2, mode='c'] P_initial_b = np.ascontiguousarray(P_initial, dtype=np.double)
@@ -222,6 +226,9 @@ cdef class EKF_sym:
     raise NotImplementedError()  # TODO
 
   def maha_test(self, x, P, kind, z, R, extra_args=[], maha_thresh=0.95):
+    raise NotImplementedError()  # TODO
+
+  def set_global(self, global_var, x):
     raise NotImplementedError()  # TODO
 
   def __dealloc__(self):
