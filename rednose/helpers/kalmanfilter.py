@@ -21,15 +21,15 @@ class KalmanFilter:
 
   @property
   def x(self):
-    return self.filter.state()
+    return self.filter.get_state()
 
   @property
   def t(self):
-    return self.filter.filter_time
+    return self.filter.get_filter_time()
 
   @property
   def P(self):
-    return self.filter.covs()
+    return self.filter.get_covs()
 
   def init_state(self, state, covs_diag=None, covs=None, filter_time=None):
     if covs_diag is not None:
@@ -37,7 +37,7 @@ class KalmanFilter:
     elif covs is not None:
       P = covs
     else:
-      P = self.filter.covs()
+      P = self.filter.get_covs()
     self.filter.init_state(state, P, filter_time)
 
   def get_R(self, kind, n):

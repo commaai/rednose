@@ -62,6 +62,7 @@ cdef extern from "rednose/helpers/ekf_sym.h" namespace "EKFS":
     VectorXd get_state()
     MatrixXdr get_covs()
     double get_filter_time()
+    
     void normalize_state(int slice_start, int slice_end_ex)
 
     bool predict_and_update_batch(
@@ -73,8 +74,12 @@ cdef extern from "rednose/helpers/ekf_sym.h" namespace "EKFS":
       vector[vector[double]] extra_args,
       bool augment)
 
+    # TODO
+    # augment
+    # get_augment_times
+    # predict
     # rts_smooth
-    # normalize_quats
+    # maha_test
 
 # Functions like `numpy_to_matrix` are not possible, cython requires default
 # constructor for return variable types which aren't available with Eigen::Map
