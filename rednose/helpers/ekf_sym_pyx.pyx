@@ -62,7 +62,7 @@ cdef extern from "rednose/helpers/ekf_sym.h" namespace "EKFS":
     VectorXd get_state()
     MatrixXdr get_covs()
     double get_filter_time()
-    
+
     void normalize_state(int slice_start, int slice_end_ex)
 
     bool predict_and_update_batch(
@@ -208,6 +208,21 @@ cdef class EKF_sym:
       z,  # TODO: take return values?
       extra_args,
     )
+
+  def augment(self):
+    raise NotImplementedError()  # TODO
+
+  def get_augment_times(self):
+    raise NotImplementedError()  # TODO
+
+  def predict(self, t):
+    raise NotImplementedError()  # TODO
+
+  def rts_smooth(self, estimates, norm_quats=False):
+    raise NotImplementedError()  # TODO
+
+  def maha_test(self, x, P, kind, z, R, extra_args=[], maha_thresh=0.95):
+    raise NotImplementedError()  # TODO
 
   def __dealloc__(self):
     del self.ekf
