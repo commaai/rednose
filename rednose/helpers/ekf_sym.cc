@@ -19,6 +19,9 @@ EKFSym::EKFSym(
 ) {
   // TODO: add logger
 
+  this->ekf = ekf_lookup(name);
+  assert(this->ekf);
+
   this->msckf = N > 0;
   this->N = N;
   this->dim_augment = dim_augment;
@@ -44,65 +47,6 @@ EKFSym::EKFSym(
 
   this->max_rewind_age = max_rewind_age;
   this->init_state(x_initial, P_initial, NAN);
-
-  // Load shared library for kalman specific kinds
-  this->feature_track_kinds = {}; // 'He_'
-  std::vector<int> kinds = { 3, 4, 9, 10, 12, 31, 32, 13, 14, 19 }; // 'h_'
-
-  this->f_dfun = f_fun;
-  this->F_dfun = F_fun;
-
-  this->err_dfun = err_fun;
-  this->inv_err_dfun = inv_err_fun;
-  this->H_mod_dfun = H_mod_fun;
-
-  this->predict_dfun = predict;
-
-  for (int kind : kinds) {
-    // TODO fill in for h_, H_ and update_
-  }
-  this->h_dfuns[3] = h_3;
-  this->h_dfuns[4] = h_4;
-  this->h_dfuns[9] = h_9;
-  this->h_dfuns[10] = h_10;
-  this->h_dfuns[12] = h_12;
-  this->h_dfuns[13] = h_13;
-  this->h_dfuns[14] = h_14;
-  this->h_dfuns[19] = h_19;
-  this->h_dfuns[31] = h_31;
-  this->h_dfuns[32] = h_32;
-
-  this->H_dfuns[3] = H_3;
-  this->H_dfuns[4] = H_4;
-  this->H_dfuns[9] = H_9;
-  this->H_dfuns[10] = H_10;
-  this->H_dfuns[12] = H_12;
-  this->H_dfuns[13] = H_13;
-  this->H_dfuns[14] = H_14;
-  this->H_dfuns[19] = H_19;
-  this->H_dfuns[31] = H_31;
-  this->H_dfuns[32] = H_32;
-
-  this->update_dfuns[3] = update_3;
-  this->update_dfuns[4] = update_4;
-  this->update_dfuns[9] = update_9;
-  this->update_dfuns[10] = update_10;
-  this->update_dfuns[12] = update_12;
-  this->update_dfuns[13] = update_13;
-  this->update_dfuns[14] = update_14;
-  this->update_dfuns[19] = update_19;
-  this->update_dfuns[31] = update_31;
-  this->update_dfuns[32] = update_32;
-
-  /* if (this->msckf) {
-    for (int kind : this->feature_track_kinds) {
-      this->He_dfuns[kind] = He_<kind>; // TODO fix
-    }
-  } */
-
-  /* for (std::string glob : this->global_vars) {
-    this->set_global_dfuns[glob] = set_[glob];
-  } */
 }
 
 void EKFSym::init_state(Map<VectorXd> state, Map<MatrixXdr> covs, double filter_time) {
@@ -143,8 +87,7 @@ bool EKFSym::predict_and_update_batch(
   std::deque<Observation> rewound;
   if (!std::isnan(this->filter_time) && t < this->filter_time) {
     if (this->rewind_t.empty() || t < this->rewind_t.front() || t < this->rewind_t.back() - this->max_rewind_age) {
-      std::cout << "C observation too old at " << t << " with filter at " << this->filter_time << ", ignoring" << std::endl;
-      // TODO self.logger.error("observation too old at %.3f with filter at %.3f, ignoring" % (t, self.filter_time))
+      std::cout << "observation too old at " << t << " with filter at " << this->filter_time << ", ignoring" << std::endl;
       return false;
     }
     this->rewind(t, rewound);
@@ -254,12 +197,12 @@ void EKFSym::_predict(double t) {
   double dt = t - this->filter_time;
   assert(dt >= 0.0);
 
-  this->predict_dfun(this->x.data(), this->P.data(), this->Q.data(), dt);
+  this->ekf->predict_dfun(this->x.data(), this->P.data(), this->Q.data(), dt);
   this->filter_time = t;
 }
 
 VectorXd EKFSym::update(int kind, VectorXd z, MatrixXdr R, std::vector<double> extra_args) {
-  this->update_dfuns[kind](this->x.data(), this->P.data(), z.data(), R.data(), extra_args.data());
+  this->ekf->update_dfuns.at(kind)(this->x.data(), this->P.data(), z.data(), R.data(), extra_args.data());
 
   if (this->msckf && std::find(this->feature_track_kinds.begin(), this->feature_track_kinds.end(), kind) != this->feature_track_kinds.end()) {
     return z.head(z.rows() - extra_args.size());
@@ -303,15 +246,15 @@ bool EKFSym::maha_test(VectorXd x, MatrixXdr P, int kind, VectorXd z, MatrixXdr 
   MatrixXdr H = MatrixXdr::Zero(z.rows(), this->dim_x);
 
   // C functions
-  this->h_dfuns[kind](x.data(), extra_args.data(), h.data());
-  this->H_dfuns[kind](x.data(), extra_args.data(), H.data());
+  this->ekf->h_dfuns.at(kind)(x.data(), extra_args.data(), h.data());
+  this->ekf->H_dfuns.at(kind)(x.data(), extra_args.data(), H.data());
 
   // y is the "loss"
   VectorXd y = z - h;
 
   // if using eskf
   MatrixXdr H_mod = MatrixXdr::Zero(x.rows(), P.rows());
-  this->H_mod_dfun(x.data(), H_mod.data());
+  this->ekf->H_mod_dfun(x.data(), H_mod.data());
   H = H * H_mod;
 
   MatrixXdr a = ((H * P) * H.transpose() + R).inverse();
@@ -346,13 +289,13 @@ MatrixXdr EKFSym::rts_smooth(std::vector<Estimate> estimates, bool norm_quats) {
     MatrixXdr Pk_k = estimates[k + 1].Pk;
     double t1 = estimates[k + 1].t;
     double dt = t2 - t1;
-    this->F_dfun(xk_k.data(), dt, Fk_1.data());
-
-    int d1 = this->dim_main;
-    int d2 = this->dim_main_err;
+    this->ekf->F_dfun(xk_k.data(), dt, Fk_1.data());
 
     // TODO:
-    /*Ck = np.linalg.solve(Pk1_k[:d2, :d2], Fk_1[:d2, :d2].dot(Pk_k[:d2, :d2].T)).T
+    /*
+    int d1 = this->dim_main;
+    int d2 = this->dim_main_err;
+    Ck = np.linalg.solve(Pk1_k[:d2, :d2], Fk_1[:d2, :d2].dot(Pk_k[:d2, :d2].T)).T
     xk_n = xk_k
     delta_x = np.zeros((Pk_n.shape[0], 1), dtype=np.float64)
     self.inv_err_function(xk1_k, xk1_n, delta_x)

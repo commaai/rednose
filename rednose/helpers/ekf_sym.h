@@ -11,9 +11,7 @@
 
 #include <eigen3/Eigen/Dense>
 
-extern "C" {  // TODO move to generation
-  #include "live.h"
-}
+#include "common_ekf.h"
 
 #define REWIND_TO_KEEP 512
 
@@ -100,6 +98,9 @@ private:
 
   static double chi2_ppf(double thres, int dim);
 
+  // stuct with linked sympy generated functions
+  const EKF *ekf = NULL;
+
   Eigen::VectorXd x;  // state
   MatrixXdr P;  // covs
 
@@ -132,19 +133,6 @@ private:
   Eigen::VectorXd augment_times;
 
   std::vector<int> feature_track_kinds;
-
-  // dynamic functions
-  void (*f_dfun)(double *, double, double *);
-  void (*F_dfun)(double *, double, double *);
-  void (*err_dfun)(double *, double *, double *);
-  void (*inv_err_dfun)(double *, double *, double *);
-  void (*H_mod_dfun)(double *, double *);
-  void (*predict_dfun)(double *, double *, double *, double);
-  std::unordered_map<int, void (*)(double *, double *, double *)> h_dfuns = {};
-  std::unordered_map<int, void (*)(double *, double *, double *)> H_dfuns = {};
-  std::unordered_map<int, void (*)(double *, double *, double *)> He_dfuns = {};
-  std::unordered_map<int, void (*)(double *, double *, double *, double *, double *)> update_dfuns = {};
-  std::unordered_map<std::string, void (*)(double)> set_global_dfuns = {};
 };
 
 }
