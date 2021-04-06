@@ -2,12 +2,6 @@ from typing import Any, Dict
 
 import numpy as np
 
-try:
-  from rednose.helpers.ekf_sym_pyx import EKF_sym
-except ImportError:
-  print('Could not import cython EKF_sym module, using python module')
-  from rednose.helpers.ekf_sym_py import EKF_sym
-
 
 class KalmanFilter:
   name = "<name>"
@@ -16,12 +10,7 @@ class KalmanFilter:
   Q = np.zeros((0, 0))
   obs_noise: Dict[int, Any] = {}
 
-  def __init__(self, generated_dir):
-    dim_state = self.initial_x.shape[0]
-    dim_state_err = self.initial_P_diag.shape[0]
-
-    # init filter
-    self.filter = EKF_sym(generated_dir, self.name, self.Q, self.initial_x, np.diag(self.initial_P_diag), dim_state, dim_state_err)
+  filter = None  # Should be initialized when initializating a KalmanFilter implementation
 
   @property
   def x(self):

@@ -29,6 +29,7 @@ env = Environment(
     "-Werror=return-type",
     "-Werror=format-extra-args",
   ],
+  LIBPATH=["#rednose/examples/generated"],
   CFLAGS="-std=gnu11",
   CXXFLAGS="-std=c++1z",
   CPPPATH=cpppath,
@@ -50,5 +51,4 @@ else:
 
 Export('env', 'envCython', 'arch')
 
-SConscript(['rednose/helpers/SConscript'])
 SConscript(['SConscript'])

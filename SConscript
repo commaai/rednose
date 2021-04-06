@@ -38,9 +38,9 @@ for target, (command, generated_folder, use_cpp) in found.items():
     else:
         env.SharedLibrary(f'{generated_folder}/' + target, target_files[0])
 
-env.SharedLibrary(f'{generated_folder}/kf', lib_target)
+libkf = env.SharedLibrary(f'{generated_folder}/libkf', lib_target)
 
-envCython.Program('#rednose/helpers/ekf_sym_pyx.so',
-    [ekf_sym_pyx, ekf_sym_cc, common_ekf],
-    LIBS=["kf"],
-    LIBPATH=[generated_folder])
+lenv = envCython.Clone()
+lenv["LINKFLAGS"] += [libkf[0].get_labspath()]
+ekf_sym_so = lenv.Program('#rednose/helpers/ekf_sym_pyx.so', [ekf_sym_pyx, ekf_sym_cc, common_ekf])
+lenv.Depends(ekf_sym_so, libkf)
