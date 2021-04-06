@@ -97,14 +97,14 @@ def gen_code(folder, name, f_sym, dt_sym, x_sym, obs_eqs, dim_x, dim_err, eskf_p
 
   header = "#pragma once\n"
   header += "#include \"rednose/helpers/common_ekf.h\"\n"
-  header += "#define DIM %d\n" % dim_x
-  header += "#define EDIM %d\n" % dim_err
-  header += "#define MEDIM %d\n" % dim_main_err
-  header += "typedef void (*Hfun)(double *, double *, double *);\n"
   header += "extern \"C\" {\n"
 
   pre_code = f"#include \"{name}.h\"\n"
   pre_code += f"\nnamespace {{\n"
+  pre_code += "#define DIM %d\n" % dim_x
+  pre_code += "#define EDIM %d\n" % dim_err
+  pre_code += "#define MEDIM %d\n" % dim_main_err
+  pre_code += "typedef void (*Hfun)(double *, double *, double *);\n"
 
   if global_vars is not None:
     for var in global_vars:
@@ -126,6 +126,7 @@ def gen_code(folder, name, f_sym, dt_sym, x_sym, obs_eqs, dim_x, dim_err, eskf_p
 
     pre_code += f"const static double MAHA_THRESH_{kind} = {maha_thresh};\n"
 
+    header += f"void {name}_update_{kind}(double *in_x, double *in_P, double *in_z, double *in_R, double *in_ea);\n"
     post_code += f"void {name}_update_{kind}(double *in_x, double *in_P, double *in_z, double *in_R, double *in_ea) {{\n"
     post_code += f"  update<{h_sym.shape[0]}, 3, {int(maha_test)}>(in_x, in_P, h_{kind}, H_{kind}, {He_str}, in_z, in_R, in_ea, MAHA_THRESH_{kind});\n"
     post_code += f"}}\n"

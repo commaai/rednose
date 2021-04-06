@@ -115,6 +115,45 @@ class EKF_sym():
       for global_var in global_vars:
         self.set_globals[global_var] = getattr(lib, f"{name}_set_{global_var}")
 
+    # wrap the C++ predict function
+    def _predict_blas(x, P, dt):
+      func = eval(f"lib.{name}_predict", {"lib": lib})
+      func(ffi.cast("double *", x.ctypes.data),
+           ffi.cast("double *", P.ctypes.data),
+           ffi.cast("double *", self.Q.ctypes.data),
+           ffi.cast("double", dt))
+      return x, P
+
+    # wrap the C++ update function
+    def fun_wrapper(f, kind):
+      f = eval(f"lib.{name}_{f}", {"lib": lib})  # pylint: disable=eval-used
+
+      def _update_inner_blas(x, P, z, R, extra_args):
+        f(ffi.cast("double *", x.ctypes.data),
+          ffi.cast("double *", P.ctypes.data),
+          ffi.cast("double *", z.ctypes.data),
+          ffi.cast("double *", R.ctypes.data),
+          ffi.cast("double *", extra_args.ctypes.data))
+        if self.msckf and kind in self.feature_track_kinds:
+          y = z[:-len(extra_args)]
+        else:
+          y = z
+        return x, P, y
+      return _update_inner_blas
+
+    self._updates = {}
+    for kind in kinds:
+      self._updates[kind] = fun_wrapper("update_%d" % kind, kind)
+
+    def _update_blas(x, P, kind, z, R, extra_args=[]):  # pylint: disable=dangerous-default-value
+        return self._updates[kind](x, P, z, R, extra_args)
+
+    # assign the functions
+    self._predict = _predict_blas
+    # self._predict = self._predict_python
+    self._update = _update_blas
+    # self._update = self._update_python
+
   def init_state(self, state, covs, filter_time):
     self.x = np.array(state.reshape((-1, 1))).astype(np.float64)
     self.P = np.array(covs).astype(np.float64)
@@ -291,7 +330,7 @@ class EKF_sym():
 
     return xk_km1, xk_k, Pk_km1, Pk_k, t, kind, y, z, extra_args
 
-  def _predict(self, x, P, dt):
+  def _predict_python(self, x, P, dt):
     x_new = np.zeros(x.shape, dtype=np.float64)
     self.f(x, dt, x_new)
 
@@ -319,7 +358,7 @@ class EKF_sym():
     P += dt * self.Q
     return x_new, P
 
-  def _update(self, x, P, kind, z, R, extra_args=[]):  # pylint: disable=dangerous-default-value
+  def _update_python(self, x, P, kind, z, R, extra_args=[]):  # pylint: disable=dangerous-default-value
     # init vars
     z = z.reshape((-1, 1))
     h = np.zeros(z.shape, dtype=np.float64)

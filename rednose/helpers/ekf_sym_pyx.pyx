@@ -78,12 +78,6 @@ cdef extern from "rednose/helpers/ekf_sym.h" namespace "EKFS":
       vector[vector[double]] extra_args,
       bool augment)
 
-    # TODO
-    # augment
-    # get_augment_times
-    # rts_smooth
-    # maha_test
-
 # Functions like `numpy_to_matrix` are not possible, cython requires default
 # constructor for return variable types which aren't available with Eigen::Map
 
@@ -126,7 +120,7 @@ cdef class EKF_sym:
       name.encode('utf8'),
       MapMatrixXdr(<double*> Q_b.data, Q.shape[0], Q.shape[1]),
       MapVectorXd(<double*> x_initial_b.data, x_initial.shape[0]),
-      MapMatrixXdr(<double*> x_initial_b.data, P_initial.shape[0], P_initial.shape[1]),
+      MapMatrixXdr(<double*> P_initial_b.data, P_initial.shape[0], P_initial.shape[1]),
       dim_main,
       dim_main_err,
       N,
@@ -187,7 +181,7 @@ cdef class EKF_sym:
     cdef vector[vector[double]] extra_args_map
     cdef vector[double] args_map
     for args in extra_args:
-      args_map.clear()  # TODO new memory addr?
+      args_map.clear()
       for a in args:
         args_map.push_back(a)
       extra_args_map.push_back(args_map)
