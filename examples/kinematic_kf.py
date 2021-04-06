@@ -4,8 +4,8 @@ import sys
 import numpy as np
 import sympy as sp
 
-from rednose import KalmanFilter
-from rednose.helpers.ekf_sym_old import gen_code
+from rednose.helpers.kalmanfilter import KalmanFilter
+from rednose.helpers.ekf_sym_gen import gen_code
 
 
 class ObservationKind():

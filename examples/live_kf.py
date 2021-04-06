@@ -4,8 +4,14 @@ import numpy as np
 import sympy as sp
 
 from rednose.helpers import KalmanError
-from rednose.helpers.ekf_sym_gen import EKF_sym, gen_code
-from rednose.helpers.sympy_helpers import (euler_rotate, quat_matrix_r, quat_rotate)
+
+if __name__ == '__main__':  # Generating sympy
+  import sympy as sp
+  from rednose.helpers.sympy_helpers import euler_rotate, quat_matrix_r, quat_rotate
+  from rednose.helpers.ekf_sym_gen import gen_code
+else:
+  from rednose.helpers.ekf_sym_pyx import EKF_sym  # pylint: disable=no-name-in-module
+  from rednose.helpers.ekf_sym_py import EKF_sym as EKF_sym2
 
 EARTH_GM = 3.986005e14  # m^3/s^2 (gravitational constant * mass of earth)
 

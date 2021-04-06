@@ -9,7 +9,7 @@ python_path = sysconfig.get_paths()['include']
 cpppath = [
   '#',
   '#rednose',
-  '#../selfdrive/locationd/models/generated',
+  '#rednose/examples/generated',
   '/usr/lib/include',
   python_path,
   np.get_include(),

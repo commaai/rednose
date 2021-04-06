@@ -24,8 +24,8 @@ struct EKF {
   void (*predict)(double *, double *, double *, double);
   std::unordered_map<int, void (*)(double *, double *, double *)> hs = {};
   std::unordered_map<int, void (*)(double *, double *, double *)> Hs = {};
-  std::unordered_map<int, void (*)(double *, double *, double *)> Hes = {};
   std::unordered_map<int, void (*)(double *, double *, double *, double *, double *)> updates = {};
+  std::unordered_map<int, void (*)(double *, double *, double *)> Hes = {};
   std::unordered_map<std::string, void (*)(double)> sets = {};
 };
 

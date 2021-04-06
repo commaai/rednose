@@ -2,7 +2,11 @@ from typing import Any, Dict
 
 import numpy as np
 
-from rednose.helpers.ekf_sym_py import EKF_sym
+try:
+  from rednose.helpers.ekf_sym_pyx import EKF_sym
+except ImportError:
+  print('Could not import cython EKF_sym module, using python module')
+  from rednose.helpers.ekf_sym_py import EKF_sym
 
 
 class KalmanFilter:
