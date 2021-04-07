@@ -1,6 +1,6 @@
-Import('env', 'envCython', 'arch', 'rednose')
+Import('env', 'envCython', 'arch', 'rednose_config')
 
-generated_folder = rednose['generated_folder']
+generated_folder = rednose_config['generated_folder']
 
 templates = Glob('#rednose/templates/*')
 
@@ -11,7 +11,7 @@ ekf_sym_cc = "#rednose/helpers/ekf_sym.cc"
 common_ekf = "#rednose/helpers/common_ekf.cc"
 
 found = {}
-for target, (command, combined_lib) in rednose['to_build'].items():
+for target, (command, combined_lib) in rednose_config['to_build'].items():
   if File(command).exists():
     found[target] = (command, combined_lib)
 

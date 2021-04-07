@@ -84,22 +84,6 @@ private:
   Estimate predict_and_update_batch(Observation& obs, bool augment);
   Eigen::VectorXd update(int kind, Eigen::VectorXd z, MatrixXdr R, std::vector<double> extra_args);
 
-  void augment();
-
-  bool maha_test(
-    Eigen::VectorXd x,
-    MatrixXdr P,
-    int kind,
-    Eigen::VectorXd z,
-    MatrixXdr R,
-    std::vector<double> extra_args,
-    double maha_thresh = 0.95
-  );
-
-  MatrixXdr rts_smooth(std::vector<Estimate> estimates, bool norm_quats = false);
-
-  static double chi2_ppf(double thres, int dim);
-
   // stuct with linked sympy generated functions
   const EKF *ekf = NULL;
 

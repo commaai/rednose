@@ -189,9 +189,9 @@ Estimate EKFSym::predict_and_update_batch(Observation& obs, bool augment) {
   res.y = y;
 
   assert(!augment); // TODO
-  if (augment) {
-    this->augment();
-  }
+  // if (augment) {
+  //   this->augment();
+  // }
 
   this->checkpoint(obs);
 

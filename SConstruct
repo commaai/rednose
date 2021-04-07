@@ -49,7 +49,7 @@ elif arch == "aarch64":
 else:
   envCython["LINKFLAGS"] = ["-pthread", "-shared"]
 
-rednose = {
+rednose_config = {
   'generated_folder': '#examples/generated',
   'to_build': {
     'live': ('#examples/live_kf.py', True),
@@ -61,5 +61,5 @@ rednose = {
   },
 }
 
-Export('env', 'envCython', 'arch', 'rednose')
+Export('env', 'envCython', 'arch', 'rednose_config')
 SConscript(['#rednose/SConscript'])
