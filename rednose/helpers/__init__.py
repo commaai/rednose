@@ -24,7 +24,7 @@ def load_code(folder, name, lib_name=None):
     header = f.read()
 
   # is the only thing that can be parsed by cffi
-  header = "\n".join([line for line in header.split("\n") if not (line.startswith("#") or line.startswith("extern"))])
+  header = "\n".join([line for line in header.split("\n") if line.startswith("void ")])
 
   ffi = FFI()
   ffi.cdef(header)

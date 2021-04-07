@@ -52,11 +52,11 @@ class LstSqComputer():
 
     code = "\n#include \"rednose/helpers/common_ekf.h\"\n" + code
     code += "\n#define KDIM %d\n" % K
+    code += "extern \"C\" {\n"
     code += "\n" + open(os.path.join(TEMPLATE_DIR, "compute_pos.c")).read()
+    code += "\n}\n"
 
-    header += """
-    void compute_pos(double *to_c, double *in_poses, double *in_img_positions, double *param, double *pos);
-    """
+    header += "\nvoid compute_pos(double *to_c, double *in_poses, double *in_img_positions, double *param, double *pos);\n"
 
     filename = f"{LstSqComputer.name}_{K}"
     write_code(generated_dir, filename, code, header)
