@@ -8,9 +8,9 @@ ENV PATH="/root/.pyenv/bin:/root/.pyenv/shims:${PATH}"
 RUN pyenv install 3.7.3
 RUN pyenv global 3.7.3
 RUN pyenv rehash
-RUN pip3 install scons==3.1.1 pre-commit==2.4.0 pylint==2.5.2
+RUN pip3 install scons==3.1.1 pre-commit==2.4.0 pylint==2.5.2 Cython==0.29.22
 
-WORKDIR /project/rednose
+WORKDIR /project
 
 ENV PYTHONPATH=/project
 
