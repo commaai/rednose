@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <map>
 #include <cmath>
+#include <optional>
 
 #include <eigen3/Eigen/Dense>
 
@@ -67,8 +68,7 @@ public:
   void reset_rewind();
 
   void predict(double t);
-  bool predict_and_update_batch(
-    Estimate* res,
+  std::optional<Estimate> predict_and_update_batch(
     double t,
     int kind,
     std::vector<Eigen::Map<Eigen::VectorXd>> z,
@@ -78,10 +78,10 @@ public:
   );
 
 private:
-  void rewind(double t, std::deque<Observation>& rewound);
+  std::deque<Observation> rewind(double t);
   void checkpoint(Observation& obs);
 
-  void predict_and_update_batch(Estimate* res, Observation& obs, bool augment);
+  Estimate predict_and_update_batch(Observation& obs, bool augment);
   Eigen::VectorXd update(int kind, Eigen::VectorXd z, MatrixXdr R, std::vector<double> extra_args);
 
   void augment();

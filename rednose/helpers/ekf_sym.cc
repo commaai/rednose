@@ -81,8 +81,7 @@ void EKFSym::set_global(std::string global_var, double val) {
   this->ekf->sets.at(global_var)(val);
 }
 
-bool EKFSym::predict_and_update_batch(
-  Estimate* res,
+std::optional<Estimate> EKFSym::predict_and_update_batch(
   double t,
   int kind,
   std::vector<Map<VectorXd> > z_map,
@@ -96,9 +95,9 @@ bool EKFSym::predict_and_update_batch(
   if (!std::isnan(this->filter_time) && t < this->filter_time) {
     if (this->rewind_t.empty() || t < this->rewind_t.front() || t < this->rewind_t.back() - this->max_rewind_age) {
       std::cout << "observation too old at " << t << " with filter at " << this->filter_time << ", ignoring" << std::endl;
-      return false;
+      return std::nullopt;
     }
-    this->rewind(t, rewound);
+    rewound = this->rewind(t);
   }
 
   Observation obs;
@@ -111,15 +110,16 @@ bool EKFSym::predict_and_update_batch(
   for (Map<MatrixXdr> Ri : R_map) {
     obs.R.push_back(Ri);
   }
-  this->predict_and_update_batch(res, obs, augment);
+
+  std::optional<Estimate> res = std::make_optional(this->predict_and_update_batch(obs, augment));
 
   // optional fast forward
   while (!rewound.empty()) {
-    this->predict_and_update_batch(NULL, rewound.front(), false);
+    this->predict_and_update_batch(rewound.front(), false);
     rewound.pop_front();
   }
 
-  return true;
+  return res;
 }
 
 void EKFSym::reset_rewind() {
@@ -128,7 +128,9 @@ void EKFSym::reset_rewind() {
   this->rewind_states.clear();
 }
 
-void EKFSym::rewind(double t, std::deque<Observation>& rewound) {
+std::deque<Observation> EKFSym::rewind(double t) {
+  std::deque<Observation> rewound;
+
   // rewind observations until t is after previous observation
   while (this->rewind_t.back() > t) {
     rewound.push_front(this->rewind_obscache.back());
@@ -141,6 +143,8 @@ void EKFSym::rewind(double t, std::deque<Observation>& rewound) {
   this->filter_time = this->rewind_t.back();
   this->x = this->rewind_states.back().first;
   this->P = this->rewind_states.back().second;
+
+  return rewound;
 }
 
 void EKFSym::checkpoint(Observation& obs) {
@@ -157,19 +161,18 @@ void EKFSym::checkpoint(Observation& obs) {
   }
 }
 
-void EKFSym::predict_and_update_batch(Estimate* res, Observation& obs, bool augment) {
+Estimate EKFSym::predict_and_update_batch(Observation& obs, bool augment) {
   assert(obs.z.size() == obs.R.size());
 
   this->predict(obs.t);
 
-  if (res != NULL) {
-    res->t = obs.t;
-    res->kind = obs.kind;
-    res->z = obs.z;
-    res->extra_args = obs.extra_args;
-    res->xk1 = this->x;
-    res->Pk1 = this->P;
-  }
+  Estimate res;
+  res.t = obs.t;
+  res.kind = obs.kind;
+  res.z = obs.z;
+  res.extra_args = obs.extra_args;
+  res.xk1 = this->x;
+  res.Pk1 = this->P;
 
   // update batch
   std::vector<VectorXd> y;
@@ -181,11 +184,9 @@ void EKFSym::predict_and_update_batch(Estimate* res, Observation& obs, bool augm
     y.push_back(this->update(obs.kind, obs.z[i], obs.R[i], obs.extra_args[i]));
   }
 
-  if (res != NULL) {
-    res->xk = this->x;
-    res->Pk = this->P;
-    res->y = y;
-  }
+  res.xk = this->x;
+  res.Pk = this->P;
+  res.y = y;
 
   assert(!augment); // TODO
   if (augment) {
@@ -193,6 +194,8 @@ void EKFSym::predict_and_update_batch(Estimate* res, Observation& obs, bool augm
   }
 
   this->checkpoint(obs);
+
+  return res;
 }
 
 void EKFSym::predict(double t) {

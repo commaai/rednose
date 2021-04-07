@@ -11,6 +11,12 @@ cimport numpy as np
 
 import numpy as np
 
+cdef extern from "<optional>" namespace "std" nogil:
+  cdef cppclass optional[T]:
+    ctypedef T value_type
+    bool has_value()
+    T& value()
+
 cdef extern from "rednose/helpers/ekf_sym.h" namespace "EKFS":
   cdef cppclass MapVectorXd "Eigen::Map<Eigen::VectorXd>":
     MapVectorXd(double*, int)
@@ -69,8 +75,7 @@ cdef extern from "rednose/helpers/ekf_sym.h" namespace "EKFS":
     void reset_rewind()
 
     void predict(double t)
-    bool predict_and_update_batch(
-      Estimate* res,
+    optional[Estimate] predict_and_update_batch(
       double t,
       int kind,
       vector[MapVectorXd] z,
@@ -186,19 +191,19 @@ cdef class EKF_sym:
         args_map.push_back(a)
       extra_args_map.push_back(args_map)
 
-    cdef Estimate res
-    if not self.ekf.predict_and_update_batch(&res, t, kind, z_map, R_map, extra_args_map, augment):
+    cdef optional[Estimate] res = self.ekf.predict_and_update_batch(t, kind, z_map, R_map, extra_args_map, augment)
+    if not res.has_value():
       return None
 
     cdef VectorXd tmpvec
     return (
-      vector_to_numpy(res.xk1),
-      vector_to_numpy(res.xk),
-      matrix_to_numpy(res.Pk1),
-      matrix_to_numpy(res.Pk),
-      res.t,
-      res.kind,
-      [vector_to_numpy(tmpvec) for tmpvec in res.y],
+      vector_to_numpy(res.value().xk1),
+      vector_to_numpy(res.value().xk),
+      matrix_to_numpy(res.value().Pk1),
+      matrix_to_numpy(res.value().Pk),
+      res.value().t,
+      res.value().kind,
+      [vector_to_numpy(tmpvec) for tmpvec in res.value().y],
       z,  # TODO: take return values?
       extra_args,
     )
