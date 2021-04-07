@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import sys
 import numpy as np
-import sympy as sp
 
 from rednose.helpers import KalmanError
 

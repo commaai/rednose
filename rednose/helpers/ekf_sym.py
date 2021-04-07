@@ -7,7 +7,7 @@ import sympy as sp
 from numpy import dot
 
 from rednose.helpers.sympy_helpers import sympy_into_c
-from rednose.helpers import (TEMPLATE_DIR, load_code, write_code)
+from rednose.helpers import TEMPLATE_DIR, load_code
 from rednose.helpers.chi2_lookup import chi2_ppf
 
 
@@ -117,7 +117,7 @@ def gen_code(folder, name, f_sym, dt_sym, x_sym, obs_eqs, dim_x, dim_err, eskf_p
   header += "extern \"C\" {\n"
 
   pre_code = f"#include \"{name}.h\"\n"
-  pre_code += f"\nnamespace {{\n"
+  pre_code += "\nnamespace {\n"
   pre_code += "#define DIM %d\n" % dim_x
   pre_code += "#define EDIM %d\n" % dim_err
   pre_code += "#define MEDIM %d\n" % dim_main_err
@@ -146,7 +146,7 @@ def gen_code(folder, name, f_sym, dt_sym, x_sym, obs_eqs, dim_x, dim_err, eskf_p
     header += f"void {name}_update_{kind}(double *in_x, double *in_P, double *in_z, double *in_R, double *in_ea);\n"
     post_code += f"void {name}_update_{kind}(double *in_x, double *in_P, double *in_z, double *in_R, double *in_ea) {{\n"
     post_code += f"  update<{h_sym.shape[0]}, 3, {int(maha_test)}>(in_x, in_P, h_{kind}, H_{kind}, {He_str}, in_z, in_R, in_ea, MAHA_THRESH_{kind});\n"
-    post_code += f"}}\n"
+    post_code += "}\n"
 
   # For ffi loading of specific functions
   for line in sympy_header.split("\n"):
@@ -155,19 +155,19 @@ def gen_code(folder, name, f_sym, dt_sym, x_sym, obs_eqs, dim_x, dim_err, eskf_p
       header += f"void {name}_{func_call};\n"
       post_code += f"void {name}_{func_call} {{\n"
       post_code += f"  {func_call.replace('double *', '').replace('double', '')};\n"
-      post_code += f"}}\n"
+      post_code += "}\n"
   header += f"void {name}_predict(double *in_x, double *in_P, double *in_Q, double dt);\n"
   post_code += f"void {name}_predict(double *in_x, double *in_P, double *in_Q, double dt) {{\n"
-  post_code += f"  predict(in_x, in_P, in_Q, dt);\n"
-  post_code += f"}}\n"
+  post_code += "  predict(in_x, in_P, in_Q, dt);\n"
+  post_code += "}\n"
   if global_vars is not None:
     for var in global_vars:
       header += f"void {name}_set_{var.name}(double x);\n"
       post_code += f"void {name}_set_{var.name}(double x) {{\n"
       post_code += f"  set_{var.name}(x);\n"
-      post_code += f"}}\n"
+      post_code += "}\n"
 
-  post_code += f"}}\n\n" # extern c
+  post_code += "}\n\n" # extern c
 
   funcs = ['f_fun', 'F_fun', 'err_fun', 'inv_err_fun', 'H_mod_fun', 'predict']
   func_lists = {
@@ -190,8 +190,8 @@ def gen_code(folder, name, f_sym, dt_sym, x_sym, obs_eqs, dim_x, dim_err, eskf_p
     for kind in kinds:
       str_kind = f"\"{kind}\"" if type(kind) == str else kind
       post_code += f"    {{ {str_kind}, {name}_{group}_{kind} }},\n"
-    post_code += f"  }},\n"
-  post_code += f"}};\n\n"
+    post_code += "  },\n"
+  post_code += "};\n\n"
   post_code += f"ekf_init({name});\n"
 
   # merge code blocks
@@ -297,7 +297,7 @@ class EKF_sym():
 
     # wrap the C++ predict function
     def _predict_blas(x, P, dt):
-      func = eval(f"lib.{name}_predict", {"lib": lib})
+      func = eval(f"lib.{name}_predict", {"lib": lib})  # pylint: disable=eval-used
       func(ffi.cast("double *", x.ctypes.data),
            ffi.cast("double *", P.ctypes.data),
            ffi.cast("double *", self.Q.ctypes.data),
