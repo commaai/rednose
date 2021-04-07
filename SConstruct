@@ -49,6 +49,16 @@ elif arch == "aarch64":
 else:
   envCython["LINKFLAGS"] = ["-pthread", "-shared"]
 
-Export('env', 'envCython', 'arch')
+rednose_generated_folder = '#examples/generated'
+rednose_to_build = {
+  'live': ('#examples/live_kf.py', True),
+  'kinematic': ('#examples/kinematic_kf.py', True),
+  'compare': ('#examples/test_compare.py', True),
+  'pos_computer_4': ('#rednose/helpers/lst_sq_computer.py', False),
+  'pos_computer_5': ('#rednose/helpers/lst_sq_computer.py', False),
+  'feature_handler_5': ('#rednose/helpers/feature_handler.py', False),
+}
 
-SConscript(['SConscript'])
+Export('env', 'envCython', 'arch', 'rednose_to_build', 'rednose_generated_folder')
+
+SConscript(['#rednose/SConscript'])
