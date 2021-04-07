@@ -116,8 +116,8 @@ class TestCompare(unittest.TestCase):
       kf.filter_pyx.predict_and_update_batch(t, ObservationKind.POSITION, z, R)
 
       self.assertAlmostEqual(kf.filter_py.get_filter_time(), kf.filter_pyx.get_filter_time())
-      self.assertTrue(np.allclose(kf.filter_py.get_state(), kf.filter_pyx.get_state()))
-      self.assertTrue(np.allclose(kf.filter_py.get_covs(), kf.filter_pyx.get_covs()))
+      self.assertTrue(np.allclose(kf.filter_py.state(), kf.filter_pyx.state()))
+      self.assertTrue(np.allclose(kf.filter_py.covs(), kf.filter_pyx.covs()))
 
 
 if __name__ == "__main__":

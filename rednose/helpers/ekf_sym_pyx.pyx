@@ -60,8 +60,8 @@ cdef extern from "rednose/helpers/ekf_sym.h" namespace "EKFS":
       MapMatrixXdr covs,
       double filter_time)
 
-    VectorXd get_state()
-    MatrixXdr get_covs()
+    VectorXd state()
+    MatrixXdr covs()
     void set_filter_time(double t)
     double get_filter_time()
     void normalize_state(int slice_start, int slice_end_ex)
@@ -140,12 +140,12 @@ cdef class EKF_sym:
       np.nan if filter_time is None else filter_time
     )
 
-  def get_state(self):
-    cdef np.ndarray res = vector_to_numpy(self.ekf.get_state())
+  def state(self):
+    cdef np.ndarray res = vector_to_numpy(self.ekf.state())
     return res
 
-  def get_covs(self):
-    return matrix_to_numpy(self.ekf.get_covs())
+  def covs(self):
+    return matrix_to_numpy(self.ekf.covs())
 
   def set_filter_time(self, double t):
     self.ekf.set_filter_time(t)

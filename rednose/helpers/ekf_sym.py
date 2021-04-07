@@ -376,10 +376,10 @@ class EKF_sym():
     self.augment_times.append(self.filter_time)
     assert self.P.shape == (self.dim_err, self.dim_err)
 
-  def get_state(self):
+  def state(self):
     return np.array(self.x).flatten()
 
-  def get_covs(self):
+  def covs(self):
     return self.P
 
   def set_filter_time(self, t):

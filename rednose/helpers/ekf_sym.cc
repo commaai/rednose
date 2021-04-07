@@ -57,11 +57,11 @@ void EKFSym::init_state(Map<VectorXd> state, Map<MatrixXdr> covs, double filter_
   this->reset_rewind();
 }
 
-VectorXd EKFSym::get_state() {
+VectorXd EKFSym::state() {
   return this->x;
 }
 
-MatrixXdr EKFSym::get_covs() {
+MatrixXdr EKFSym::covs() {
   return this->P;
 }
 

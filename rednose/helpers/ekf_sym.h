@@ -58,8 +58,8 @@ public:
 
   void init_state(Eigen::Map<Eigen::VectorXd> state, Eigen::Map<MatrixXdr> covs, double filter_time);
 
-  Eigen::VectorXd get_state();
-  MatrixXdr get_covs();
+  Eigen::VectorXd state();
+  MatrixXdr covs();
   void set_filter_time(double t);
   double get_filter_time();
   void normalize_state(int slice_start, int slice_end_ex);
