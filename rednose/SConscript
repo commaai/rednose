@@ -27,7 +27,7 @@ for target, (command, combined_lib) in found.items():
   if combined_lib:
     lib_target.append(target_files[0])
   else:
-    env.SharedLibrary(f'{generated_folder}/' + target, target_files[0])
+    env.SharedLibrary(f'{generated_folder}/' + target, [target_files[0], common_ekf])
 
 libkf = env.SharedLibrary(f'{generated_folder}/libkf', lib_target)
 
