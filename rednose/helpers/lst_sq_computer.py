@@ -48,13 +48,14 @@ class LstSqComputer():
   @staticmethod
   def generate_code(generated_dir, K=4):
     sympy_functions = generate_residual(K)
-    header, code = sympy_into_c(sympy_functions)
+    header, sympy_code = sympy_into_c(sympy_functions)
 
-    code = "\n#include \"rednose/helpers/common_ekf.h\"\n" + code
+    code = "\n#include \"rednose/helpers/common_ekf.h\"\n"
     code += "\n#define KDIM %d\n" % K
     code += "extern \"C\" {\n"
-    code += "\n" + open(os.path.join(TEMPLATE_DIR, "compute_pos.c")).read()
-    code += "\n}\n"
+    code += sympy_code
+    code += "\n" + open(os.path.join(TEMPLATE_DIR, "compute_pos.c")).read() + "\n"
+    code += "}\n"
 
     header += "\nvoid compute_pos(double *to_c, double *in_poses, double *in_img_positions, double *param, double *pos);\n"
 
