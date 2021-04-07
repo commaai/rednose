@@ -6,10 +6,10 @@ import numpy as np
 import unittest
 
 if __name__ == '__main__':  # generating sympy code
-  from rednose.helpers.ekf_sym_gen import gen_code
+  from rednose.helpers.ekf_sym import gen_code
 else:
   from rednose.helpers.ekf_sym_pyx import EKF_sym
-  from rednose.helpers.ekf_sym_py import EKF_sym as EKF_sym2
+  from rednose.helpers.ekf_sym import EKF_sym as EKF_sym2
 
 
 GENERATED_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'generated'))

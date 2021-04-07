@@ -7,7 +7,7 @@ import sympy as sp
 from rednose.helpers.kalmanfilter import KalmanFilter
 
 if __name__ == '__main__':  # generating sympy code
-  from rednose.helpers.ekf_sym_gen import gen_code
+  from rednose.helpers.ekf_sym import gen_code
 else:
   from rednose.helpers.ekf_sym_pyx import EKF_sym
 

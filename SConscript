@@ -4,7 +4,7 @@ templates = Glob('#rednose/templates/*')
 
 # TODO: get dependencies based on installation
 sympy_helpers = "#rednose/helpers/sympy_helpers.py"
-ekf_sym_gen = "#rednose/helpers/ekf_sym_gen.py"
+ekf_sym = "#rednose/helpers/ekf_sym.py"
 ekf_sym_pyx = "#rednose/helpers/ekf_sym_pyx.pyx"
 ekf_sym_cc = "#rednose/helpers/ekf_sym.cc"
 common_ekf = "#rednose/helpers/common_ekf.cc"
@@ -30,7 +30,7 @@ for target, (command, generated_folder, use_cpp) in found.items():
     command_file = File(command)
 
     env.Command(target_files,
-                [command_file, templates, sympy_helpers, ekf_sym_gen],
+                [command_file, templates, sympy_helpers, ekf_sym],
                 command_file.get_abspath() + " " + target + " " + Dir(generated_folder).get_abspath())
 
     if use_cpp:
