@@ -1,4 +1,6 @@
-Import('env', 'envCython', 'arch', 'rednose_to_build', 'rednose_generated_folder')
+Import('env', 'envCython', 'arch', 'rednose')
+
+generated_folder = rednose['generated_folder']
 
 templates = Glob('#rednose/templates/*')
 
@@ -9,25 +11,25 @@ ekf_sym_cc = "#rednose/helpers/ekf_sym.cc"
 common_ekf = "#rednose/helpers/common_ekf.cc"
 
 found = {}
-for target, (command, combined_lib) in rednose_to_build.items():
+for target, (command, combined_lib) in rednose['to_build'].items():
   if File(command).exists():
     found[target] = (command, combined_lib)
 
 lib_target = [common_ekf]
 for target, (command, combined_lib) in found.items():
-  target_files = File([f'{rednose_generated_folder}/{target}.cpp', f'{rednose_generated_folder}/{target}.h'])
+  target_files = File([f'{generated_folder}/{target}.cpp', f'{generated_folder}/{target}.h'])
   command_file = File(command)
 
   env.Command(target_files,
               [templates, command_file, sympy_helpers, ekf_sym],
-              command_file.get_abspath() + " " + target + " " + Dir(rednose_generated_folder).get_abspath())
+              command_file.get_abspath() + " " + target + " " + Dir(generated_folder).get_abspath())
 
   if combined_lib:
     lib_target.append(target_files[0])
   else:
-    env.SharedLibrary(f'{rednose_generated_folder}/' + target, target_files[0])
+    env.SharedLibrary(f'{generated_folder}/' + target, target_files[0])
 
-libkf = env.SharedLibrary(f'{rednose_generated_folder}/libkf', lib_target)
+libkf = env.SharedLibrary(f'{generated_folder}/libkf', lib_target)
 
 lenv = envCython.Clone()
 lenv["LINKFLAGS"] += [libkf[0].get_labspath()]
