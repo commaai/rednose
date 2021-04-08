@@ -47,24 +47,10 @@ cdef extern from "rednose/helpers/ekf_sym.h" namespace "EKFS":
     vector[vector[double]] extra_args
 
   cdef cppclass EKFSym:
-    EKFSym(
-      string name,
-      MapMatrixXdr Q,
-      MapVectorXd x_initial,
-      MapMatrixXdr P_initial,
-      int dim_main,
-      int dim_main_err,
-      int N,
-      int dim_augment,
-      int dim_augment_err,
-      vector[int] maha_test_kinds,
-      vector[string] global_vars,
-      double max_rewind_age)
-
-    void init_state(
-      MapVectorXd state,
-      MapMatrixXdr covs,
-      double filter_time)
+    EKFSym(string name, MapMatrixXdr Q, MapVectorXd x_initial, MapMatrixXdr P_initial, int dim_main,
+        int dim_main_err, int N, int dim_augment, int dim_augment_err, vector[int] maha_test_kinds,
+        vector[string] global_vars, double max_rewind_age)
+    void init_state(MapVectorXd state, MapMatrixXdr covs, double filter_time)
 
     VectorXd state()
     MatrixXdr covs()
@@ -75,13 +61,8 @@ cdef extern from "rednose/helpers/ekf_sym.h" namespace "EKFS":
     void reset_rewind()
 
     void predict(double t)
-    optional[Estimate] predict_and_update_batch(
-      double t,
-      int kind,
-      vector[MapVectorXd] z,
-      vector[MapMatrixXdr] z,
-      vector[vector[double]] extra_args,
-      bool augment)
+    optional[Estimate] predict_and_update_batch(double t, int kind, vector[MapVectorXd] z, vector[MapMatrixXdr] z,
+        vector[vector[double]] extra_args, bool augment)
 
 # Functions like `numpy_to_matrix` are not possible, cython requires default
 # constructor for return variable types which aren't available with Eigen::Map
@@ -100,22 +81,10 @@ cdef np.ndarray[np.float64_t, ndim=1, mode="c"] vector_to_numpy(VectorXd arr):
 
 cdef class EKF_sym:
   cdef EKFSym* ekf
-  def __cinit__(
-    self,
-    str gen_dir,
-    str name,
-    np.ndarray[np.float64_t, ndim=2] Q,
-    np.ndarray[np.float64_t, ndim=1] x_initial,
-    np.ndarray[np.float64_t, ndim=2] P_initial,
-    int dim_main,
-    int dim_main_err,
-    int N=0,
-    int dim_augment=0,
-    int dim_augment_err=0,
-    list maha_test_kinds=[],
-    list global_vars=[],
-    double max_rewind_age=1.0,
-    logger=None):
+  def __cinit__(self, str gen_dir, str name, np.ndarray[np.float64_t, ndim=2] Q,
+      np.ndarray[np.float64_t, ndim=1] x_initial, np.ndarray[np.float64_t, ndim=2] P_initial, int dim_main,
+      int dim_main_err, int N=0, int dim_augment=0, int dim_augment_err=0, list maha_test_kinds=[],
+      list global_vars=[], double max_rewind_age=1.0, logger=None):
     # TODO logger
 
     cdef np.ndarray[np.float64_t, ndim=2, mode='c'] Q_b = np.ascontiguousarray(Q, dtype=np.double)
