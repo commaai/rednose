@@ -13,4 +13,4 @@ jobs:
       run: |
         docker run rednose bash -c "git init && git add -A && pre-commit run --all"
     - name: Unit Tests
-      run: docker run rednose bash -c "cd /project/rednose/examples; python -m unittest discover"
+      run: docker run rednose bash -c "cd /project/examples; python -m unittest discover"

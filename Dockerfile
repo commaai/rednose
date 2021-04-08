@@ -5,12 +5,12 @@ RUN apt-get update && apt-get install -y libzmq3-dev capnproto libcapnp-dev clan
 
 RUN curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash
 ENV PATH="/root/.pyenv/bin:/root/.pyenv/shims:${PATH}"
-RUN pyenv install 3.7.3
-RUN pyenv global 3.7.3
+RUN pyenv install 3.8.5
+RUN pyenv global 3.8.5
 RUN pyenv rehash
-RUN pip3 install scons==3.1.1 pre-commit==2.4.0 pylint==2.5.2
+RUN pip3 install scons==4.1.0.post1 pre-commit==2.10.1 pylint==2.7.1 Cython==0.29.22
 
-WORKDIR /project/rednose
+WORKDIR /project
 
 ENV PYTHONPATH=/project
 

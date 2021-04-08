@@ -4,8 +4,12 @@ import sys
 import numpy as np
 import sympy as sp
 
-from rednose import KalmanFilter
-from rednose.helpers.ekf_sym import gen_code
+from rednose.helpers.kalmanfilter import KalmanFilter
+
+if __name__ == '__main__':  # generating sympy code
+  from rednose.helpers.ekf_sym import gen_code
+else:
+  from rednose.helpers.ekf_sym_pyx import EKF_sym
 
 
 class ObservationKind():
@@ -63,6 +67,14 @@ class KinematicKalman(KalmanFilter):
     ]
 
     gen_code(generated_dir, name, f_sym, dt, state_sym, obs_eqs, dim_state, dim_state)
+
+  def __init__(self, generated_dir):
+    dim_state = self.initial_x.shape[0]
+    dim_state_err = self.initial_P_diag.shape[0]
+
+    # init filter
+    self.filter = EKF_sym(generated_dir, self.name, self.Q, self.initial_x, np.diag(self.initial_P_diag), dim_state, dim_state_err)
+
 
 if __name__ == "__main__":
   generated_dir = sys.argv[2]
