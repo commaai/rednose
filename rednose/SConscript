@@ -7,7 +7,7 @@ templates = Glob('#rednose/templates/*')
 sympy_helpers = "#rednose/helpers/sympy_helpers.py"
 ekf_sym = "#rednose/helpers/ekf_sym.py"
 ekf_sym_pyx = "#rednose/helpers/ekf_sym_pyx.pyx"
-ekf_sym_cc = "#rednose/helpers/ekf_sym.cc"
+ekf_sym_cc = env.Object("#rednose/helpers/ekf_sym.cc")
 common_ekf = "#rednose/helpers/common_ekf.cc"
 
 found = {}
@@ -35,3 +35,5 @@ lenv = envCython.Clone()
 lenv["LINKFLAGS"] += [libkf[0].get_labspath()]
 ekf_sym_so = lenv.Program('#rednose/helpers/ekf_sym_pyx.so', [ekf_sym_pyx, ekf_sym_cc, common_ekf])
 lenv.Depends(ekf_sym_so, libkf)
+
+Export('libkf')
