@@ -30,7 +30,7 @@ with euler angles or quaternions.
 Euler angles have several problems, there are multiple ways to represent the same orientation,
 gimbal lock can cause the loss of a degree of freedom and lastly their behaviour is very non-linear when errors are large.
 Quaternions with one strictly positive dimension don't suffer from these issues, but have another set of problems.
-Quaternions need to be normalized otherwise they will grow unbounded, this is cannot be cleanly enforced in a kalman filter.
+Quaternions need to be normalized otherwise they will grow unbounded, but this cannot be cleanly enforced in a kalman filter.
 Most importantly though a quaternion has 4 dimensions, but only represents 3 degrees of freedom, so there is one redundant dimension.
 
 Kalman filters are designed to minimize the error of the system's state. It is possible to have a kalman filter where state and the error of the state are represented in a different space. As long as there is an error function that can compute the error based on the true state and estimated state. It is problematic to have redundant dimensions in the error of the kalman filter, but not in the state. A good compromise then, is to use the quaternion to represent the system's attitude state and use euler angles to describe the error in attitude. This library supports and defining an arbitrary error that is in  a different space than the state. [Joan Solà](https://arxiv.org/abs/1711.02508) has written a comprehensive description of using ESKFs for robust 3D orientation estimation.
