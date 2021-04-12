@@ -148,6 +148,7 @@ void EKFSym::checkpoint(Observation& obs) {
 
 Estimate EKFSym::predict_and_update_batch(Observation& obs, bool augment) {
   assert(obs.z.size() == obs.R.size());
+  assert(obs.z.size() == obs.extra_args.size());
 
   this->predict(obs.t);
 
