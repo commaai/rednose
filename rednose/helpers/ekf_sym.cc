@@ -206,3 +206,7 @@ VectorXd EKFSym::update(int kind, VectorXd z, MatrixXdr R, std::vector<double> e
   }
   return z;
 }
+
+extra_routine_t EKFSym::get_extra_routine(const std::string& routine) {
+  return this->ekf->extra_routines.at(routine);
+}

@@ -11,6 +11,8 @@
 
 #include <eigen3/Eigen/Dense>
 
+typedef void (*extra_routine_t)(double *, double *);
+
 struct EKF {
   std::string name;
   std::vector<int> kinds;
@@ -27,6 +29,7 @@ struct EKF {
   std::unordered_map<int, void (*)(double *, double *, double *, double *, double *)> updates = {};
   std::unordered_map<int, void (*)(double *, double *, double *)> Hes = {};
   std::unordered_map<std::string, void (*)(double)> sets = {};
+  std::unordered_map<std::string, extra_routine_t> extra_routines = {};
 };
 
 std::vector<const EKF*>& get_ekfs();

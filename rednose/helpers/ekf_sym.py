@@ -27,7 +27,7 @@ def null(H, eps=1e-12):
 
 
 def gen_code(folder, name, f_sym, dt_sym, x_sym, obs_eqs, dim_x, dim_err, eskf_params=None, msckf_params=None,  # pylint: disable=dangerous-default-value
-             maha_test_kinds=[], global_vars=None):
+             maha_test_kinds=[], global_vars=None, extra_routines=[]):
   # optional state transition matrix, H modifier
   # and err_function if an error-state kalman filter (ESKF)
   # is desired. Best described in "Quaternion kinematics
@@ -90,6 +90,9 @@ def gen_code(folder, name, f_sym, dt_sym, x_sym, obs_eqs, dim_x, dim_err, eskf_p
 
   # collect sympy functions
   sympy_functions = []
+
+  # extra routines
+  sympy_functions += extra_routines
 
   # error functions
   sympy_functions.append(('err_fun', err_eqs[0], [err_eqs[1], err_eqs[2]]))
@@ -177,6 +180,7 @@ def gen_code(folder, name, f_sym, dt_sym, x_sym, obs_eqs, dim_x, dim_err, eskf_p
     'He': [kind for _, kind, _, _, _ in obs_eqs if msckf and kind in feature_track_kinds],
     'set': [var.name for var in global_vars] if global_vars is not None else [],
   }
+  func_extra = [x[0] for x in extra_routines]
 
   # For dynamic loading of specific functions
   post_code += f"const EKF {name} = {{\n"
@@ -191,6 +195,10 @@ def gen_code(folder, name, f_sym, dt_sym, x_sym, obs_eqs, dim_x, dim_err, eskf_p
       str_kind = f"\"{kind}\"" if type(kind) == str else kind
       post_code += f"    {{ {str_kind}, {name}_{group}_{kind} }},\n"
     post_code += "  },\n"
+  post_code += "  .extra_routines = {\n"
+  for f in func_extra:
+    post_code += f"    {{ \"{f}\", {name}_{f} }},\n"
+  post_code += "  },\n"
   post_code += "};\n\n"
   post_code += f"ekf_init({name});\n"
 
