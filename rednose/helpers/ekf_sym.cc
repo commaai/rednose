@@ -205,3 +205,75 @@ VectorXd EKFSym::update(int kind, VectorXd z, MatrixXdr R, std::vector<double> e
   }
   return z;
 }
+
+void EKFSym::augment() {
+    // TODO this is not a generalized way of doing this and implies that the
+    // augmented states are simply the first (dim_augment_state) elements of
+    // the main state.
+
+    // TODO remove commented python code after testing pass
+    assert(this->msckf);
+
+    int d1 = this->dim_main;
+    int d2 = this->dim_main_err;
+    int d3 = this->dim_augment;
+    int d4 = this->dim_augment_err;
+
+    // push through augmented states
+    // this->x[d1:-d3] = this->x[d1 + d3:];
+    // ^ make elements from d1 to (element d3 elements far from the end)
+    // Traversal must be in reverse to prevent overwriting data
+    // Start at end-d3, work way back to d1
+    int x_size = this->x.size();
+    for (int ix = (x_size-1)-d3; ix >= d1; ix--) {
+        this->x[ix] = this->x[ix+d3];
+    }
+
+    // this->x[-d3:] = this->x[:d3];
+    // ^ last d3 elements = first d3 elements
+    for (int ix = 0; ix < d3; ix++) {
+        this->x[x_size-d3+ix] = this->x[ix];
+    }
+
+    assert(this->x.rows() == this->dim_x);
+    assert(this->x.cols() == 1);
+
+    // push through augmented covs
+    assert(this->P.rows() == this->dim_err);
+    assert(this->P.cols() == this->dim_err);
+
+    // Build reduced P
+    MatrixXdr P_reduced;
+    // Delete rows from d2 to before (d2+d4), do same with columns
+    int red_side = this->P.rows() - this->dim_err;
+    int irow,        icol;
+    int irow_offset, icol_offset;
+    // Skip elements
+    for (int i = 0; i < red_side; i++) {
+        icol = i % this->dim_err;
+        irow = i / this->dim_err;
+
+        icol_offset = (icol >= d2) ? d4 : 0;
+        irow_offset = (irow >= d2) ? d4 : 0;
+
+        P_reduced(irow,icol) = P(irow+irow_offset,icol+icol_offset);
+    }
+
+    assert(P_reduced.rows() == red_side);
+    assert(P_reduced.cols() == red_side);
+
+    MatrixXd to_mult = MatrixXd::Zero(this->dim_err, this->dim_err - d4);
+    // --- C++ code above | Python code below ---
+
+    // to_mult = np.zeros((self.dim_err, self.dim_err - d4))
+    // to_mult[:-d4, :] = np.eye(self.dim_err - d4)
+    // to_mult[-d4:, :d4] = np.eye(d4)
+    // self.P = to_mult.dot(P_reduced.dot(to_mult.T))
+    // self.augment_times = self.augment_times[1:]
+    // self.augment_times.append(self.filter_time)
+
+    // --- Python code above | C++ code below ---
+
+    assert(this->P.rows() == this->dim_err);
+    assert(this->P.cols() == this->dim_err);
+}

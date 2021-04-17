@@ -179,15 +179,19 @@ cdef class EKF_sym:
 
   def augment(self):
     raise NotImplementedError()  # TODO
+    self.ekf.augment()
 
   def get_augment_times(self):
     raise NotImplementedError()  # TODO
+    return self.ekf.get_augment_times()
 
   def rts_smooth(self, estimates, norm_quats=False):
     raise NotImplementedError()  # TODO
+    return self.ekf.rts_smooth(estimates, norm_quats)
 
   def maha_test(self, x, P, kind, z, R, extra_args=[], maha_thresh=0.95):
     raise NotImplementedError()  # TODO
+    return self.ekf.maha_test(x, P, kind, z, R, extra_args, maha_thresh)
 
   def __dealloc__(self):
     del self.ekf
