@@ -242,14 +242,15 @@ void EKFSym::augment() {
     assert(this->P.rows() == this->dim_err);
     assert(this->P.cols() == this->dim_err);
 
-    // Build reduced P
-    MatrixXdr P_reduced;
-    // Delete rows from d2 to before (d2+d4), do same with columns
-    int red_side = this->P.rows() - this->dim_err;
+    // Build P_reduced by selectively copying P's contents
+    // Skip rows from d2 to before (d2+d4), do same with columns
+    int red_side = this->P.rows() - d4;
+    MatrixXd P_reduced = MatrixXd::Zero(red_side, red_side);
+    MatrixXd to_mult   = MatrixXd::Zero(this->dim_err, red_side);
     int irow,        icol;
     int irow_offset, icol_offset;
-    // Skip elements
     for (int i = 0; i < red_side; i++) {
+        // Build P_reduced
         icol = i % this->dim_err;
         irow = i / this->dim_err;
 
@@ -257,23 +258,44 @@ void EKFSym::augment() {
         irow_offset = (irow >= d2) ? d4 : 0;
 
         P_reduced(irow,icol) = P(irow+irow_offset,icol+icol_offset);
+
+        // Build to_mult
+        // to_mult[:-d4, :] = np.eye(self.dim_err - d4)
+        // The submatrix comprised of all rows except last d4 is set to an identity
+        // matrix
+        to_mult(i, i) = 1;
+        // to_mult[-d4:, :d4] = np.eye(d4)
+        // The submatrix comprised by the last d4 rows and therein all columns up
+        // to the d4-th column is set to an identity matrix
+        if (i < d4) to_mult(red_side+i, i) = 1;
     }
 
+    // TODO aren't we certain enough that the side of P_reduced is red_side?
+    // Are these asserts really required?
     assert(P_reduced.rows() == red_side);
     assert(P_reduced.cols() == red_side);
 
-    MatrixXd to_mult = MatrixXd::Zero(this->dim_err, this->dim_err - d4);
-    // --- C++ code above | Python code below ---
+    this->P = to_mult.dot(P_reduced.dot(to_mult.transpose()));
 
-    // to_mult = np.zeros((self.dim_err, self.dim_err - d4))
-    // to_mult[:-d4, :] = np.eye(self.dim_err - d4)
-    // to_mult[-d4:, :d4] = np.eye(d4)
-    // self.P = to_mult.dot(P_reduced.dot(to_mult.T))
-    // self.augment_times = self.augment_times[1:]
-    // self.augment_times.append(self.filter_time)
+    // P = to_mult dot (P_reduced dot transpose(to_mult))
+    // to_mult             is dim_err  x red_side
+    // P_reduced           is red_side x red_side
+    // to_mult.transpose() is red_side x dim_err
+    // P_reduced . (above) is red_side x dim_err
+    // to_mult . (above)   is dim_err  x dim_err
 
-    // --- Python code above | C++ code below ---
-
+    // TODO aren't we certain enough that the side of P is dim_err?
+    // Are these asserts really required?
     assert(this->P.rows() == this->dim_err);
     assert(this->P.cols() == this->dim_err);
+
+    // self.augment_times = self.augment_times[1:]
+    // discard 0th element
+    // self.augment_times.append(self.filter_time)
+    // append new element on end
+    // augment_times is a ring buffer
+    for (int i = this->N-1; i > 0; i--) {
+        this->augment_times(i-1) = this->augment_times(i);
+    }
+    this->augment_times(this->N-1) = this->filter_time;
 }
