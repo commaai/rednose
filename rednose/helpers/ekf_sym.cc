@@ -299,3 +299,86 @@ void EKFSym::augment() {
     }
     this->augment_times(this->N-1) = this->filter_time;
 }
+
+VectorXd EKFSym::get_augment_times() {
+    return this->augment_times;
+}
+
+MatrixXd EKFSym::rts_smooth(UNKNOWN_TYPE estimates, bool norm_quats) {
+    /*
+     * Returns rts smoothed results of kalman filter estimates
+     * If the kalman state is augmented with old states only the main state is
+     * smoothed
+     */
+
+    // xk_n = estimates[-1][0]
+    // returns element from last row, first column
+    VectorXd xk_n = estimates(estimates.rows()-1, 0);
+
+    // Pk_n = estimates[-1][2]
+    // returns element from last row, third column
+    MatrixXdr Pk_n = estimates(estimates.rows()-1, 2);
+
+    MatrixXdr Fk_1 = MatrixXd::Zero(Pk_n.rows(), Pk_n.cols());
+
+    std::vector<VectorXd> states_smoothed = {xk_n};
+    std::vector<MatrixXdr> covs_smoothed = {Pk_n};
+
+    VectorXd xk1_n, xk1_k, xk_k;
+    VectorXd xk1_subvec = VectorXd::Zero(7-3);
+    for (int i = 0; i < (7-3); i++) {
+        xk1_subvec(i) = xk1_n(i+3);
+    }
+    xk1_subvec_norm = xk1_subvec.norm();
+
+    MatrixXdr Pk1_n, Pk1_k, Pk_k;
+
+    double dt, t2, t1;
+
+    int   d1 = this->dim_main;
+    int   d2 = this->dim_main_err;
+
+    double xk1_subvec_norm = 0;
+    for (int k = estimates.size() - 2; k >= -1; i--) {
+        xk1_n = xk_n;
+        Pk1_n = Pk_n;
+
+        if (norm_quats) {
+            // xk1_n[3:7] /= np.linalg.norm(xk1_n[3:7])
+            for (int i = 3; i < 7; i++) {
+                xk1_n(i) /= xk1_subvec_norm;
+            }
+        }
+
+        xk1_k = estimates(k+1, 0);
+        Pk1_k = estimates(k+1, 2);
+        t2    = estimates(k+1, 4);
+
+        xk_k  = estimates(k,   1);
+        Pk_k  = estimates(k,   3);
+        t1    = estimates(k,   4);
+
+        dt = t2 - t1;
+
+        this->F(xk_k, dt, Fk_1);
+        // TODO needs implementation
+
+        // CONTINUE
+    }
+    // [^] c++ | py  [v]
+    //   Ck = np.linalg.solve(Pk1_k[:d2, :d2], Fk_1[:d2, :d2].dot(Pk_k[:d2, :d2].T)).T
+    //   xk_n = xk_k
+    //   delta_x = np.zeros((Pk_n.shape[0], 1), dtype=np.float64)
+    //   self.inv_err_function(xk1_k, xk1_n, delta_x)
+    //   delta_x[:d2] = Ck.dot(delta_x[:d2])
+    //   x_new = np.zeros((xk_n.shape[0], 1), dtype=np.float64)
+    //   self.err_function(xk_k, delta_x, x_new)
+    //   xk_n[:d1] = x_new[:d1, 0]
+    //   Pk_n = Pk_k
+    //   Pk_n[:d2, :d2] = Pk_k[:d2, :d2] + Ck.dot(Pk1_n[:d2, :d2] - Pk1_k[:d2, :d2]).dot(Ck.T)
+    //   states_smoothed.append(xk_n)
+    //   covs_smoothed.append(Pk_n)
+    //
+    // return np.flipud(np.vstack(states_smoothed)), np.stack(covs_smoothed, 0)[::-1]
+    // [^] py  | c++ [v]
+}
