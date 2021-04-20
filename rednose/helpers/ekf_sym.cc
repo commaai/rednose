@@ -148,6 +148,7 @@ void EKFSym::checkpoint(Observation& obs) {
 
 Estimate EKFSym::predict_and_update_batch(Observation& obs, bool augment) {
   assert(obs.z.size() == obs.R.size());
+  assert(obs.z.size() == obs.extra_args.size());
 
   this->predict(obs.t);
 
@@ -204,4 +205,8 @@ VectorXd EKFSym::update(int kind, VectorXd z, MatrixXdr R, std::vector<double> e
     return z.head(z.rows() - extra_args.size());
   }
   return z;
+}
+
+extra_routine_t EKFSym::get_extra_routine(const std::string& routine) {
+  return this->ekf->extra_routines.at(routine);
 }

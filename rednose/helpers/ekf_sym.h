@@ -58,7 +58,9 @@ public:
 
   void predict(double t);
   std::optional<Estimate> predict_and_update_batch(double t, int kind, std::vector<Eigen::Map<Eigen::VectorXd>> z,
-      std::vector<Eigen::Map<MatrixXdr>> R, std::vector<std::vector<double>> extra_args, bool augment = false);
+      std::vector<Eigen::Map<MatrixXdr>> R, std::vector<std::vector<double>> extra_args = {{}}, bool augment = false);
+
+  extra_routine_t get_extra_routine(const std::string& routine);
 
 private:
   std::deque<Observation> rewind(double t);
