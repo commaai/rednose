@@ -221,19 +221,11 @@ void EKFSym::augment() {
 
     // push through augmented states
     // this->x[d1:-d3] = this->x[d1 + d3:];
-    // ^ make elements from d1 to (element d3 elements far from the end)
-    // Traversal must be in reverse to prevent overwriting data
-    // Start at end-d3, work way back to d1
-    int x_size = this->x.size();
-    for (int ix = (x_size-1)-d3; ix >= d1; ix--) {
-        this->x[ix] = this->x[ix+d3];
-    }
+    int s = this->dim_x - d3 - d1;
+    this->x.segment<s>(d1) = this->x.segment<s>(d1+d3);
 
     // this->x[-d3:] = this->x[:d3];
-    // ^ last d3 elements = first d3 elements
-    for (int ix = 0; ix < d3; ix++) {
-        this->x[x_size-d3+ix] = this->x[ix];
-    }
+    this->x.tail(d3) = this->x.head(d3);
 
     assert(this->x.rows() == this->dim_x);
     assert(this->x.cols() == 1);
@@ -249,6 +241,9 @@ void EKFSym::augment() {
     MatrixXd to_mult   = MatrixXd::Zero(this->dim_err, red_side);
     int irow,        icol;
     int irow_offset, icol_offset;
+    // TODO evaluate whether to convert this to a series of block operations,
+    // although this may be faster since it involves just looping red_side
+    // times once. The sacrifice is maintainability though.
     for (int i = 0; i < red_side; i++) {
         // Build P_reduced
         icol = i % this->dim_err;
@@ -289,15 +284,8 @@ void EKFSym::augment() {
     assert(this->P.rows() == this->dim_err);
     assert(this->P.cols() == this->dim_err);
 
-    // self.augment_times = self.augment_times[1:]
-    // discard 0th element
-    // self.augment_times.append(self.filter_time)
-    // append new element on end
-    // augment_times is a ring buffer
-    for (int i = this->N-1; i > 0; i--) {
-        this->augment_times(i-1) = this->augment_times(i);
-    }
-    this->augment_times(this->N-1) = this->filter_time;
+    this->augment_times.head(this->N-1) = this->augment_times.tail(this->N-1);
+    this->augment_times.tail(1) = this->filter_time;
 }
 
 VectorXd EKFSym::get_augment_times() {
@@ -310,6 +298,8 @@ MatrixXd EKFSym::rts_smooth(UNKNOWN_TYPE estimates, bool norm_quats) {
      * If the kalman state is augmented with old states only the main state is
      * smoothed
      */
+
+    // TODO find what estimates is. It seems to be a 3D object.
 
     // xk_n = estimates[-1][0]
     // returns element from last row, first column
@@ -325,11 +315,7 @@ MatrixXd EKFSym::rts_smooth(UNKNOWN_TYPE estimates, bool norm_quats) {
     std::vector<MatrixXdr> covs_smoothed = {Pk_n};
 
     VectorXd xk1_n, xk1_k, xk_k;
-    VectorXd xk1_subvec = VectorXd::Zero(7-3);
-    for (int i = 0; i < (7-3); i++) {
-        xk1_subvec(i) = xk1_n(i+3);
-    }
-    xk1_subvec_norm = xk1_subvec.norm();
+    double xk1_subvec_norm = xk1_n.segment<7-3>(3).norm();
 
     MatrixXdr Pk1_n, Pk1_k, Pk_k;
 
@@ -338,16 +324,15 @@ MatrixXd EKFSym::rts_smooth(UNKNOWN_TYPE estimates, bool norm_quats) {
     int   d1 = this->dim_main;
     int   d2 = this->dim_main_err;
 
-    double xk1_subvec_norm = 0;
+    VectorXd delta_x, x_new;
+    MatrixXd Ck;
+    SolverBase Pk1_k_dec;
     for (int k = estimates.size() - 2; k >= -1; i--) {
         xk1_n = xk_n;
         Pk1_n = Pk_n;
 
         if (norm_quats) {
-            // xk1_n[3:7] /= np.linalg.norm(xk1_n[3:7])
-            for (int i = 3; i < 7; i++) {
-                xk1_n(i) /= xk1_subvec_norm;
-            }
+            xk1_n.segment<7-3>(3) /= xk1_subvec_norm;
         }
 
         xk1_k = estimates(k+1, 0);
@@ -363,22 +348,34 @@ MatrixXd EKFSym::rts_smooth(UNKNOWN_TYPE estimates, bool norm_quats) {
         this->F(xk_k, dt, Fk_1);
         // TODO needs implementation
 
-        // CONTINUE
+        // A X = B
+        // X = SolverBase(A).solve(B)
+        Pk1_k_dec = SolverBase(Pk1_k.block<d2,d2>(0,0));
+        Ck = Pk1_k_dec.solve(
+                Fk_1.block<d2,d2>.block(0,0).dot(
+                    Pk_k.block<d2,d2>(0,0).transpose()
+                ).transpose());
+        xk_n = xk_k;
+        delta_x = VectorXd::Zero(Pk_n.rows());
+        this->inv_err_function(xk1_k, xk1_n, delta_x); // TODO: implement
+        delta_x.head(d2) = Ck.dot(delta_x.head(d2));
+        x_new = VectorXd::Zero(xk_n.rows());
+        this->err_function(xk_k, delta_x, x_new); // TODO implement
+        xk_n.head(d1) = x_new.head(d1);
+        Pk_n = Pk_k;
+        Pk_n.block<d2,d2>(0,0) =   Pk_k.block<d2,d2>(0,0)
+                                 + Ck.dot(  Pk1_n.block<d2,d2>(0,0)
+                                          - Pk1_k.block<d2,d2>(0,0).dot(Ck.transpose()));
+        states_smoothed.push_back(xk_n);
+        covs_smoothed.push_back(Pk_n);
     }
-    // [^] c++ | py  [v]
-    //   Ck = np.linalg.solve(Pk1_k[:d2, :d2], Fk_1[:d2, :d2].dot(Pk_k[:d2, :d2].T)).T
-    //   xk_n = xk_k
-    //   delta_x = np.zeros((Pk_n.shape[0], 1), dtype=np.float64)
-    //   self.inv_err_function(xk1_k, xk1_n, delta_x)
-    //   delta_x[:d2] = Ck.dot(delta_x[:d2])
-    //   x_new = np.zeros((xk_n.shape[0], 1), dtype=np.float64)
-    //   self.err_function(xk_k, delta_x, x_new)
-    //   xk_n[:d1] = x_new[:d1, 0]
-    //   Pk_n = Pk_k
-    //   Pk_n[:d2, :d2] = Pk_k[:d2, :d2] + Ck.dot(Pk1_n[:d2, :d2] - Pk1_k[:d2, :d2]).dot(Ck.T)
-    //   states_smoothed.append(xk_n)
-    //   covs_smoothed.append(Pk_n)
-    //
-    // return np.flipud(np.vstack(states_smoothed)), np.stack(covs_smoothed, 0)[::-1]
+    // CONTINUE
+
+    // TODO  find out what the difference between the two returned values would
+    // be, it seems to me their equal
+    // return np.flipud(np.vstack(states_smoothed)),
+    //        np.stack(covs_smoothed, 0)[::-1]
+    // return np.flipud(np.vstack(states_smoothed)),
+    //        np.flipup(np.vstack(covs_smoothed, 0))
     // [^] py  | c++ [v]
 }
