@@ -292,7 +292,7 @@ VectorXd EKFSym::get_augment_times() {
     return this->augment_times;
 }
 
-MatrixXd EKFSym::rts_smooth(UNKNOWN_TYPE estimates, bool norm_quats) {
+std::vector<std::vector<MatrixXdr>> EKFSym::rts_smooth(UNKNOWN_TYPE estimates, bool norm_quats) {
     /*
      * Returns rts smoothed results of kalman filter estimates
      * If the kalman state is augmented with old states only the main state is
@@ -300,10 +300,11 @@ MatrixXd EKFSym::rts_smooth(UNKNOWN_TYPE estimates, bool norm_quats) {
      */
 
     // TODO find what estimates is. It seems to be a 3D object.
+    std::vector<std::vector<MatrixXdr>> return_object;
 
     // xk_n = estimates[-1][0]
     // returns element from last row, first column
-    VectorXd xk_n = estimates(estimates.rows()-1, 0);
+    MatrixXdr xk_n = estimates(estimates.rows()-1, 0);
 
     // Pk_n = estimates[-1][2]
     // returns element from last row, third column
@@ -311,28 +312,28 @@ MatrixXd EKFSym::rts_smooth(UNKNOWN_TYPE estimates, bool norm_quats) {
 
     MatrixXdr Fk_1 = MatrixXd::Zero(Pk_n.rows(), Pk_n.cols());
 
-    std::vector<VectorXd> states_smoothed = {xk_n};
-    std::vector<MatrixXdr> covs_smoothed = {Pk_n};
+    std::vector<MatrixXdr> states_smoothed;
+    std::vector<MatrixXdr> covs_smoothed;
 
-    VectorXd xk1_n, xk1_k, xk_k;
-    double xk1_subvec_norm = xk1_n.segment<7-3>(3).norm();
+    states_smoothed.push_back(xk_n);
+    covs_smoothed.push_back(Pk_n);
 
+    MatrixXdr xk1_n, xk1_k, xk_k;
     MatrixXdr Pk1_n, Pk1_k, Pk_k;
 
     double dt, t2, t1;
 
-    int   d1 = this->dim_main;
-    int   d2 = this->dim_main_err;
+    int d1 = this->dim_main;
+    int d2 = this->dim_main_err;
 
     VectorXd delta_x, x_new;
     MatrixXd Ck;
-    SolverBase Pk1_k_dec;
     for (int k = estimates.size() - 2; k >= -1; i--) {
         xk1_n = xk_n;
         Pk1_n = Pk_n;
 
         if (norm_quats) {
-            xk1_n.segment<7-3>(3) /= xk1_subvec_norm;
+            xk1_n.segment<7-3>(3) /= xk1_n.segment<7-3>(3).norm();
         }
 
         xk1_k = estimates(k+1, 0);
@@ -345,22 +346,19 @@ MatrixXd EKFSym::rts_smooth(UNKNOWN_TYPE estimates, bool norm_quats) {
 
         dt = t2 - t1;
 
-        this->F(xk_k, dt, Fk_1);
-        // TODO needs implementation
+        this->ekf->F(xk_k, dt, Fk_1);
+        // TODO find out: is this how this works?
 
-        // A X = B
-        // X = SolverBase(A).solve(B)
-        Pk1_k_dec = SolverBase(Pk1_k.block<d2,d2>(0,0));
-        Ck = Pk1_k_dec.solve(
+        Ck = Pk1_k.block<d2,d2>(0,0).ldlt().solve(
                 Fk_1.block<d2,d2>.block(0,0).dot(
                     Pk_k.block<d2,d2>(0,0).transpose()
                 ).transpose());
         xk_n = xk_k;
         delta_x = VectorXd::Zero(Pk_n.rows());
-        this->inv_err_function(xk1_k, xk1_n, delta_x); // TODO: implement
+        this->ekf->inv_err_function(xk1_k, xk1_n, delta_x); // TODO: see prev TODO
         delta_x.head(d2) = Ck.dot(delta_x.head(d2));
         x_new = VectorXd::Zero(xk_n.rows());
-        this->err_function(xk_k, delta_x, x_new); // TODO implement
+        this->ekf->err_function(xk_k, delta_x, x_new); // TODO see prev TODO
         xk_n.head(d1) = x_new.head(d1);
         Pk_n = Pk_k;
         Pk_n.block<d2,d2>(0,0) =   Pk_k.block<d2,d2>(0,0)
@@ -369,13 +367,12 @@ MatrixXd EKFSym::rts_smooth(UNKNOWN_TYPE estimates, bool norm_quats) {
         states_smoothed.push_back(xk_n);
         covs_smoothed.push_back(Pk_n);
     }
-    // CONTINUE
 
-    // TODO  find out what the difference between the two returned values would
-    // be, it seems to me their equal
-    // return np.flipud(np.vstack(states_smoothed)),
-    //        np.stack(covs_smoothed, 0)[::-1]
-    // return np.flipud(np.vstack(states_smoothed)),
-    //        np.flipup(np.vstack(covs_smoothed, 0))
-    // [^] py  | c++ [v]
+    std::reverse(states_smoothed.begin(), states_smoothed.end());
+    std::reverse(covs_smoothed.begin(),   covs_smoothed.end());
+
+    return_object.push_back(states_smoothed);
+    return_object.push_back(covs_smoothed);
+
+    return return_object;
 }

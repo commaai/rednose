@@ -62,8 +62,8 @@ public:
 
   void augment();
   Eigen::VectorXd get_augment_times();
-  // def rts_smooth(self, estimates, norm_quats=False):
-  Eigen::MatrixXd rts_smooth(UNKNOWN_TYPE estimates, bool norm_quats); // TODO norm_quats shall default to false
+  std::vector<std::vector<MatrixXdr>> rts_smooth(UNKNOWN_TYPE estimates, bool norm_quats = false);
+  // TODO Determine whether this return-type is ok
   // def maha_test(self, x, P, kind, z, R, extra_args=[], maha_thresh=0.95):
   UNKNOWN_TYPE maha_test();
 
