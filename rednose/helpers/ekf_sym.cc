@@ -292,33 +292,24 @@ VectorXd EKFSym::get_augment_times() {
     return this->augment_times;
 }
 
-std::vector<std::vector<MatrixXdr>> EKFSym::rts_smooth(UNKNOWN_TYPE estimates, bool norm_quats) {
+RTSSmoothResult EKFSym::rts_smooth(std::vector<Estimate> *estimates, bool norm_quats) {
     /*
      * Returns rts smoothed results of kalman filter estimates
      * If the kalman state is augmented with old states only the main state is
      * smoothed
      */
 
-    // TODO find what estimates is. It seems to be a 3D object.
-    std::vector<std::vector<MatrixXdr>> return_object;
+    RTSSmoothResult retobj;
 
-    // xk_n = estimates[-1][0]
-    // returns element from last row, first column
-    MatrixXdr xk_n = estimates(estimates.rows()-1, 0);
-
-    // Pk_n = estimates[-1][2]
-    // returns element from last row, third column
-    MatrixXdr Pk_n = estimates(estimates.rows()-1, 2);
+    VectorXd xk_n  = estimates->back().xk1;
+    MatrixXdr Pk_n = estimates->back().Pk1;
 
     MatrixXdr Fk_1 = MatrixXd::Zero(Pk_n.rows(), Pk_n.cols());
 
-    std::vector<MatrixXdr> states_smoothed;
-    std::vector<MatrixXdr> covs_smoothed;
+    retobj.states_smoothed.push_back(xk_n);
+    retobj.covs_smoothed.push_back(Pk_n);
 
-    states_smoothed.push_back(xk_n);
-    covs_smoothed.push_back(Pk_n);
-
-    MatrixXdr xk1_n, xk1_k, xk_k;
+    VectorXd xk1_n, xk1_k, xk_k;
     MatrixXdr Pk1_n, Pk1_k, Pk_k;
 
     double dt, t2, t1;
@@ -328,7 +319,7 @@ std::vector<std::vector<MatrixXdr>> EKFSym::rts_smooth(UNKNOWN_TYPE estimates, b
 
     VectorXd delta_x, x_new;
     MatrixXd Ck;
-    for (int k = estimates.size() - 2; k >= -1; i--) {
+    for (int k = (int) estimates->size() - 2; k >= -1; i--) {
         xk1_n = xk_n;
         Pk1_n = Pk_n;
 
@@ -336,13 +327,13 @@ std::vector<std::vector<MatrixXdr>> EKFSym::rts_smooth(UNKNOWN_TYPE estimates, b
             xk1_n.segment<7-3>(3) /= xk1_n.segment<7-3>(3).norm();
         }
 
-        xk1_k = estimates(k+1, 0);
-        Pk1_k = estimates(k+1, 2);
-        t2    = estimates(k+1, 4);
+        xk1_k = estimates[k+1].xk1;
+        Pk1_k = estimates[k+1].Pk1;
+        t2    = estimates[k+1].t;
 
-        xk_k  = estimates(k,   1);
-        Pk_k  = estimates(k,   3);
-        t1    = estimates(k,   4);
+        xk_k  = estimates[k].xk;
+        Pk_k  = estimates[k].Pk;
+        t1    = estimates[k].t;
 
         dt = t2 - t1;
 
@@ -364,15 +355,44 @@ std::vector<std::vector<MatrixXdr>> EKFSym::rts_smooth(UNKNOWN_TYPE estimates, b
         Pk_n.block<d2,d2>(0,0) =   Pk_k.block<d2,d2>(0,0)
                                  + Ck.dot(  Pk1_n.block<d2,d2>(0,0)
                                           - Pk1_k.block<d2,d2>(0,0).dot(Ck.transpose()));
-        states_smoothed.push_back(xk_n);
-        covs_smoothed.push_back(Pk_n);
+        retobj.states_smoothed.push_back(xk_n);
+        retobj.covs_smoothed.push_back(Pk_n);
     }
 
-    std::reverse(states_smoothed.begin(), states_smoothed.end());
-    std::reverse(covs_smoothed.begin(),   covs_smoothed.end());
+    std::reverse(retobj.states_smoothed.begin(), retobj.states_smoothed.end());
+    std::reverse(retobj.covs_smoothed.begin(),   retobj.covs_smoothed.end());
 
-    return_object.push_back(states_smoothed);
-    return_object.push_back(covs_smoothed);
-
-    return return_object;
+    return retobj;
 }
+
+bool maha_test(VectorXd x, MatrixXdr P, UNKNOWN kind, UNKNOWN z, UNKNOWN R, UNKNOWN extra_args, double maha_thresh) {
+    // init vars
+    VectorXd z1(z.data(), z.size());
+    VectorXd h = VectorXd::Zero(z1.size());
+    MatrixXd H = MatrixXd::Zero(z1.size(), this->dim_x);
+
+    // C functions
+    this->hs[kind](x, extra_args, &h);
+    this->Hs[kind](x, extra_args, &H);
+
+    // y is the "loss"
+    y = z - h;
+
+    // if using eskf
+    MatrixXd H_mod = MatrixXd::Zero(x.rows(), P.rows());
+    this->H_mod(x, H_mod);
+    H = H.dot(H_mod);
+
+    MatrixXd a = H.dot(P).dot(H.transpose()) + R;
+    a = a.inverse();
+    maha_dist = y.transpose().dot(a.dot(y));
+
+    return (maha_dist <= chi2_ppf(maha_thresh, y.rows()));
+}
+
+// def maha_test(self, x, P, kind, z, R, extra_args=[], maha_thresh=0.95):  # pylint: disable=dangerous-default-value
+//
+//     if maha_dist > chi2_ppf(maha_thresh, y.shape[0]):
+//       return False
+//     else:
+//       return True

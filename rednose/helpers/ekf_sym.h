@@ -40,6 +40,11 @@ typedef struct Estimate {
   std::vector<std::vector<double>> extra_args;
 } Estimate;
 
+typedef struct RTSSmoothResult {
+    std::vector<Eigen::VectorXd> states_smoothed;
+    std::vector<MatrixXdr> covs_smoothed;
+} RTSSmoothResult;
+
 class EKFSym {
 public:
   EKFSym(std::string name, Eigen::Map<MatrixXdr> Q, Eigen::Map<Eigen::VectorXd> x_initial,
@@ -62,10 +67,10 @@ public:
 
   void augment();
   Eigen::VectorXd get_augment_times();
-  std::vector<std::vector<MatrixXdr>> rts_smooth(UNKNOWN_TYPE estimates, bool norm_quats = false);
+  RTSSmoothResult rts_smooth(std::vector<Estimate> *estimates, bool norm_quats = false);
   // TODO Determine whether this return-type is ok
   // def maha_test(self, x, P, kind, z, R, extra_args=[], maha_thresh=0.95):
-  UNKNOWN_TYPE maha_test();
+  bool maha_test(..., double maha_thresh = 0.95);
 
 private:
   std::deque<Observation> rewind(double t);
