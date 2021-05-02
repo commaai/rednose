@@ -13,6 +13,7 @@
 #include <eigen3/Eigen/Dense>
 
 #include "common_ekf.h"
+#include "chi2_lookup.h"
 
 #define REWIND_TO_KEEP 512
 
@@ -68,9 +69,8 @@ public:
   void augment();
   Eigen::VectorXd get_augment_times();
   RTSSmoothResult rts_smooth(std::vector<Estimate> *estimates, bool norm_quats = false);
-  // TODO Determine whether this return-type is ok
-  // def maha_test(self, x, P, kind, z, R, extra_args=[], maha_thresh=0.95):
-  bool maha_test(..., double maha_thresh = 0.95);
+  // TODO Determine whether RTSSmoothResult return-type is ok
+  bool maha_test(VectorXd x, MatrixXdr P, int kind, VectorXd z, MatrixXdr R, std::vector<double> extra_args, double maha_thresh = 0.95);
 
 private:
   std::deque<Observation> rewind(double t);

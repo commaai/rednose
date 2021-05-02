@@ -365,7 +365,11 @@ RTSSmoothResult EKFSym::rts_smooth(std::vector<Estimate> *estimates, bool norm_q
     return retobj;
 }
 
-bool maha_test(VectorXd x, MatrixXdr P, UNKNOWN kind, UNKNOWN z, UNKNOWN R, UNKNOWN extra_args, double maha_thresh) {
+// TODO figure out what to do with the following python comment on the python
+// maha_test function implementation header:
+// # pylint: disable=dangerous-default-value
+bool maha_test(VectorXd x, MatrixXdr P, int kind, VectorXd z, MatrixXdr R, std::vector<double> extra_args, double maha_thresh = 0.95)
+{
     // init vars
     VectorXd z1(z.data(), z.size());
     VectorXd h = VectorXd::Zero(z1.size());
@@ -389,10 +393,3 @@ bool maha_test(VectorXd x, MatrixXdr P, UNKNOWN kind, UNKNOWN z, UNKNOWN R, UNKN
 
     return (maha_dist <= chi2_ppf(maha_thresh, y.rows()));
 }
-
-// def maha_test(self, x, P, kind, z, R, extra_args=[], maha_thresh=0.95):  # pylint: disable=dangerous-default-value
-//
-//     if maha_dist > chi2_ppf(maha_thresh, y.shape[0]):
-//       return False
-//     else:
-//       return True
