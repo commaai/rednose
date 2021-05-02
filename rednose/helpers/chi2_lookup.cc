@@ -1,39 +1,41 @@
 #include "chi2_lookup.h"
 
-void gen_chi2_ppf_lookup(int max_dim) {// TODO max_dim default to 200
-    MatrixXd table = MatrixXd::Zero(max_dim, 98);
-    range = range from 0.01 to 0.99 in steps of 0.01
-    for (int idim = 0; idim < max_dim; idim++) {
-        table[idim] = chi2.ppf(range, idim);
+#define CLIP(bottom,top,x) ((x < bottom) ? bottom : ((x > top) ? top : x))
+
+#define P_MIN 0.01
+#define P_MAX 0.99
+#define P_IND_MAX 97
+#define P_IND_MIN  0
+#define P_CMP_TH  0.01
+
+double chi2_ppf(double p, uint8_t dim)
+{
+    Eigen::VectorXd chi2_table_row;
+    std::ifstream fobj;
+    // TODO determine this path correctly
+    fobj.open("/tmp/chi2_lookup_table.npy",
+              std::ifstream::in | std::ifstream::binary);
+    populate_lookup_row(&fobj, &chi2_table_row, dim);
+    fobj.close();
+    // Assert p is between 0.01 and 0.99, inclusive
+    // ((p >= 0.01) && (p <= 0.99))
+    // Find closest upper and lower boundaries of p in the range from 0.01 to
+    // 0.99 and stride 0.01
+    double p_fact = (double) 100*p; // same as div. by 0.01
+    double p_low  = std::floor (p_fact)/100;
+    double p_high = std::ceil  (p_fact)/100;
+
+    if (std::fabs(p_low - p_high) < P_CMP_TH) {
+        return chi2_table_row[CLIP(P_IND_MIN, P_IND_MAX, ((uint8_t) p_fact) - 1)];
+    } else {
+        if      (std::fabs(p_high - P_MAX) < P_CMP_TH)
+            p_low = p_high - 0.01;
+        else if (std::fabs(p_low - P_MIN) < P_CMP_TH)
+            p_high = p_low + 0.01;
+
+        double f_low  = chi2_table_row[CLIP(P_IND_MIN, P_IND_MAX, 100*((uint8_t) p_low ) - 1)];
+        double f_high = chi2_table_row[CLIP(P_IND_MIN, P_IND_MAX, 100*((uint8_t) p_high) - 1)];
+
+        return f_low + (p - p_low)/(p_high - p_low) * (f_high - f_low);
     }
-    // save to file
 }
-
-double chi2_ppd(type p, type dim) {
-    MatrixXd table = // load from file
-    double result;
-    return result;
-}
-
-int main(int argc, char *argv[]) {
-    gen_chi2_ppf_lookup();
-}
-
-// Python underneath
-def gen_chi2_ppf_lookup(max_dim=200):
-  from scipy.stats import chi2
-  table = np.zeros((max_dim, 98))
-  for dim in range(1, max_dim):
-    table[dim] = chi2.ppf(np.arange(.01, .99, .01), dim)
-
-  np.save('chi2_lookup_table', table)
-
-
-def chi2_ppf(p, dim):
-  table = np.load(os.path.dirname(os.path.realpath(__file__)) + '/chi2_lookup_table.npy')
-  result = np.interp(p, np.arange(.01, .99, .01), table[dim])
-  return result
-
-
-if __name__ == "__main__":
-  gen_chi2_ppf_lookup()
