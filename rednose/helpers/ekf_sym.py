@@ -396,9 +396,6 @@ class EKF_sym():
   def get_filter_time(self):
     return self.filter_time
 
-  def normalize_state(self, slice_start, slice_end_ex):
-    self.x[slice_start:slice_end_ex] /= np.linalg.norm(self.x[slice_start:slice_end_ex])
-
   def get_augment_times(self):
     return self.augment_times
 
