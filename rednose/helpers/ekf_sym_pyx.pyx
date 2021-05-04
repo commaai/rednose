@@ -49,7 +49,7 @@ cdef extern from "rednose/helpers/ekf_sym.h" namespace "EKFS":
   cdef cppclass EKFSym:
     EKFSym(string name, MapMatrixXdr Q, MapVectorXd x_initial, MapMatrixXdr P_initial, int dim_main,
         int dim_main_err, int N, int dim_augment, int dim_augment_err, vector[int] maha_test_kinds,
-        vector[int] normalize_idxs, vector[string] global_vars, double max_rewind_age)
+        vector[int] quaternion_idxs, vector[string] global_vars, double max_rewind_age)
     void init_state(MapVectorXd state, MapMatrixXdr covs, double filter_time)
 
     VectorXd state()
@@ -83,7 +83,7 @@ cdef class EKF_sym:
   def __cinit__(self, str gen_dir, str name, np.ndarray[np.float64_t, ndim=2] Q,
       np.ndarray[np.float64_t, ndim=1] x_initial, np.ndarray[np.float64_t, ndim=2] P_initial, int dim_main,
       int dim_main_err, int N=0, int dim_augment=0, int dim_augment_err=0, list maha_test_kinds=[],
-      list normalize_idxs=[], list global_vars=[], double max_rewind_age=1.0, logger=None):
+      list quaternion_idxs=[], list global_vars=[], double max_rewind_age=1.0, logger=None):
     # TODO logger
 
     cdef np.ndarray[np.float64_t, ndim=2, mode='c'] Q_b = np.ascontiguousarray(Q, dtype=np.double)
@@ -100,7 +100,7 @@ cdef class EKF_sym:
       dim_augment,
       dim_augment_err,
       maha_test_kinds,
-      normalize_idxs,
+      quaternion_idxs,
       [x.encode('utf8') for x in global_vars],
       max_rewind_age
     )

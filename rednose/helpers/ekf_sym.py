@@ -27,7 +27,7 @@ def null(H, eps=1e-12):
 
 
 def gen_code(folder, name, f_sym, dt_sym, x_sym, obs_eqs, dim_x, dim_err, eskf_params=None, msckf_params=None,  # pylint: disable=dangerous-default-value
-             maha_test_kinds=[], global_vars=None, extra_routines=[]):
+             maha_test_kinds=[], quaternion_idxs=[], global_vars=None, extra_routines=[]):
   # optional state transition matrix, H modifier
   # and err_function if an error-state kalman filter (ESKF)
   # is desired. Best described in "Quaternion kinematics
@@ -216,7 +216,7 @@ def gen_code(folder, name, f_sym, dt_sym, x_sym, obs_eqs, dim_x, dim_err, eskf_p
 
 class EKF_sym():
   def __init__(self, folder, name, Q, x_initial, P_initial, dim_main, dim_main_err,  # pylint: disable=dangerous-default-value
-               N=0, dim_augment=0, dim_augment_err=0, maha_test_kinds=[], global_vars=None, max_rewind_age=1.0, logger=logging):
+               N=0, dim_augment=0, dim_augment_err=0, maha_test_kinds=[], quaternion_idxs=[], global_vars=None, max_rewind_age=1.0, logger=logging):
     """Generates process function and all observation functions for the kalman filter."""
     self.msckf = N > 0
     self.N = N
