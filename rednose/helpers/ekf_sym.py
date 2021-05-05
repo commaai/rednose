@@ -239,6 +239,9 @@ class EKF_sym():
     # tested for outlier rejection
     self.maha_test_kinds = maha_test_kinds
 
+    # quaternions need normalization
+    self.quaternion_idxs = quaternion_idxs
+
     # process noise
     self.Q = Q
 
@@ -395,6 +398,13 @@ class EKF_sym():
 
   def get_filter_time(self):
     return self.filter_time
+
+  def normalize_quaternions(self):
+    for idx in self.quaternion_idxs:
+      self.normalize_slice(idx, idx+4)
+
+  def normalize_slice(self, slice_start, slice_end_ex):
+    self.x[slice_start:slice_end_ex] /= np.linalg.norm(self.x[slice_start:slice_end_ex])
 
   def get_augment_times(self):
     return self.augment_times
