@@ -455,6 +455,7 @@ class EKF_sym():
     dt = t - self.filter_time
     assert dt >= 0
     self.x, self.P = self._predict(self.x, self.P, dt)
+    self.normalize_quaternions()
     self.filter_time = t
 
   def predict_and_update_batch(self, t, kind, z, R, extra_args=[[]], augment=False):  # pylint: disable=dangerous-default-value
@@ -514,6 +515,7 @@ class EKF_sym():
       extra_args_i = np.array(extra_args[i], dtype=np.float64, order='F')
       # update
       self.x, self.P, y_i = self._update(self.x, self.P, kind, z_i, R_i, extra_args=extra_args_i)
+      self.normalize_quaternions()
       y.append(y_i)
     xk_k, Pk_k = np.copy(self.x).flatten(), np.copy(self.P)
 
