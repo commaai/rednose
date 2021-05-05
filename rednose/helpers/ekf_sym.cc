@@ -5,7 +5,7 @@ using namespace Eigen;
 
 EKFSym::EKFSym(std::string name, Map<MatrixXdr> Q, Map<VectorXd> x_initial, Map<MatrixXdr> P_initial, int dim_main,
     int dim_main_err, int N, int dim_augment, int dim_augment_err, std::vector<int> maha_test_kinds,
-    std::vector<std::string> global_vars, double max_rewind_age)
+    std::vector<int> quaternion_idxs, std::vector<std::string> global_vars, double max_rewind_age)
 {
   // TODO: add logger
 
@@ -30,9 +30,12 @@ EKFSym::EKFSym(std::string name, Map<MatrixXdr> Q, Map<VectorXd> x_initial, Map<
   // tested for outlier rejection
   this->maha_test_kinds = maha_test_kinds;
 
+  // quaternions need normalization
+  this->quaternion_idxs = quaternion_idxs;
+
   this->global_vars = global_vars;
 
-  // Process nosie
+  // Process noise
   this->Q = Q;
 
   this->max_rewind_age = max_rewind_age;
@@ -63,7 +66,13 @@ double EKFSym::get_filter_time() {
   return this->filter_time;
 }
 
-void EKFSym::normalize_state(int slice_start, int slice_end_ex) {
+void EKFSym::normalize_quaternions() {
+  for(std::size_t i = 0; i < this->quaternion_idxs.size(); ++i) {
+    this->normalize_slice(this->quaternion_idxs[i], this->quaternion_idxs[i] + 4);
+  }
+}
+
+void EKFSym::normalize_slice(int slice_start, int slice_end_ex) {
   this->x.block(slice_start, 0, slice_end_ex - slice_start, this->x.cols()).normalize();
 }
 
@@ -195,11 +204,13 @@ void EKFSym::predict(double t) {
   assert(dt >= 0.0);
 
   this->ekf->predict(this->x.data(), this->P.data(), this->Q.data(), dt);
+  this->normalize_quaternions();
   this->filter_time = t;
 }
 
 VectorXd EKFSym::update(int kind, VectorXd z, MatrixXdr R, std::vector<double> extra_args) {
   this->ekf->updates.at(kind)(this->x.data(), this->P.data(), z.data(), R.data(), extra_args.data());
+  this->normalize_quaternions();
 
   if (this->msckf && std::find(this->feature_track_kinds.begin(), this->feature_track_kinds.end(), kind) != this->feature_track_kinds.end()) {
     return z.head(z.rows() - extra_args.size());

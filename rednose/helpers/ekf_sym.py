@@ -27,7 +27,7 @@ def null(H, eps=1e-12):
 
 
 def gen_code(folder, name, f_sym, dt_sym, x_sym, obs_eqs, dim_x, dim_err, eskf_params=None, msckf_params=None,  # pylint: disable=dangerous-default-value
-             maha_test_kinds=[], global_vars=None, extra_routines=[]):
+             maha_test_kinds=[], quaternion_idxs=[], global_vars=None, extra_routines=[]):
   # optional state transition matrix, H modifier
   # and err_function if an error-state kalman filter (ESKF)
   # is desired. Best described in "Quaternion kinematics
@@ -216,7 +216,7 @@ def gen_code(folder, name, f_sym, dt_sym, x_sym, obs_eqs, dim_x, dim_err, eskf_p
 
 class EKF_sym():
   def __init__(self, folder, name, Q, x_initial, P_initial, dim_main, dim_main_err,  # pylint: disable=dangerous-default-value
-               N=0, dim_augment=0, dim_augment_err=0, maha_test_kinds=[], global_vars=None, max_rewind_age=1.0, logger=logging):
+               N=0, dim_augment=0, dim_augment_err=0, maha_test_kinds=[], quaternion_idxs=[], global_vars=None, max_rewind_age=1.0, logger=logging):
     """Generates process function and all observation functions for the kalman filter."""
     self.msckf = N > 0
     self.N = N
@@ -238,6 +238,9 @@ class EKF_sym():
     # kinds that should get mahalanobis distance
     # tested for outlier rejection
     self.maha_test_kinds = maha_test_kinds
+
+    # quaternions need normalization
+    self.quaternion_idxs = quaternion_idxs
 
     # process noise
     self.Q = Q
@@ -396,7 +399,11 @@ class EKF_sym():
   def get_filter_time(self):
     return self.filter_time
 
-  def normalize_state(self, slice_start, slice_end_ex):
+  def normalize_quaternions(self):
+    for idx in self.quaternion_idxs:
+      self.normalize_slice(idx, idx+4)
+
+  def normalize_slice(self, slice_start, slice_end_ex):
     self.x[slice_start:slice_end_ex] /= np.linalg.norm(self.x[slice_start:slice_end_ex])
 
   def get_augment_times(self):
@@ -448,6 +455,7 @@ class EKF_sym():
     dt = t - self.filter_time
     assert dt >= 0
     self.x, self.P = self._predict(self.x, self.P, dt)
+    self.normalize_quaternions()
     self.filter_time = t
 
   def predict_and_update_batch(self, t, kind, z, R, extra_args=[[]], augment=False):  # pylint: disable=dangerous-default-value
@@ -507,6 +515,7 @@ class EKF_sym():
       extra_args_i = np.array(extra_args[i], dtype=np.float64, order='F')
       # update
       self.x, self.P, y_i = self._update(self.x, self.P, kind, z_i, R_i, extra_args=extra_args_i)
+      self.normalize_quaternions()
       y.append(y_i)
     xk_k, Pk_k = np.copy(self.x).flatten(), np.copy(self.P)
 
