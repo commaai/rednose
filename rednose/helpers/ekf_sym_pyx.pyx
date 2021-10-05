@@ -17,6 +17,8 @@ cdef extern from "<optional>" namespace "std" nogil:
     bool has_value()
     T& value()
 
+cdef extern from "logger/logger.h":
+  pass
 cdef extern from "rednose/helpers/ekf_sym.h" namespace "EKFS":
   cdef cppclass MapVectorXd "Eigen::Map<Eigen::VectorXd>":
     MapVectorXd(double*, int)
