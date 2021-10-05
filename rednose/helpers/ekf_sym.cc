@@ -1,5 +1,5 @@
 #include "ekf_sym.h"
-#include "logger/logger.h"
+#include "logger.h"
 
 using namespace EKFS;
 using namespace Eigen;
