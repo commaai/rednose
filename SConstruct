@@ -5,6 +5,8 @@ import numpy as np
 
 arch = subprocess.check_output(["uname", "-m"], encoding='utf8').rstrip()
 
+common = ''
+
 python_path = sysconfig.get_paths()['include']
 cpppath = [
   '#',
@@ -61,5 +63,5 @@ rednose_config = {
   },
 }
 
-Export('env', 'envCython', 'arch', 'rednose_config')
+Export('env', 'envCython', 'arch', 'rednose_config', 'common')
 SConscript(['#rednose/SConscript'])
