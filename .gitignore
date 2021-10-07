@@ -1,6 +1,7 @@
 generated/
 .sconsign.dblite
 *.swp
+*.tmp
 
 # Cython intermediates
 *_pyx.cpp
