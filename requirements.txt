@@ -1,0 +1,9 @@
+sympy
+numpy
+scipy
+tqdm
+cffi
+scons==4.1.0.post1
+pre-commit==2.10.1
+pylint==2.7.1
+Cython==0.29.22
