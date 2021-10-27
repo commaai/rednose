@@ -1,5 +1,3 @@
-# Kalman filter library
-
 ## Introduction
 The kalman filter framework described here is an incredibly powerful tool for any optimization problem,
 but particularly for visual odometry, sensor fusion localization or SLAM. It is designed to provide very
