@@ -30,6 +30,7 @@ env = Environment(
     "-Werror=int-conversion",
     "-Werror=return-type",
     "-Werror=format-extra-args",
+    "-Wshadow",
   ],
   LIBPATH=["#rednose/examples/generated"],
   CFLAGS="-std=gnu11",
@@ -40,7 +41,7 @@ env = Environment(
 
 # Cython build enviroment
 envCython = env.Clone()
-envCython["CCFLAGS"] += ["-Wno-#warnings", "-Wno-deprecated-declarations"]
+envCython["CCFLAGS"] += ["-Wno-#warnings", "-Wno-shadow", "-Wno-deprecated-declarations"]
 
 envCython["LIBS"] = []
 if arch == "Darwin":
