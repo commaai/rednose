@@ -1,6 +1,6 @@
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: master
+    rev: v4.0.1
     hooks:
     -   id: check-ast
     -   id: check-json
@@ -9,12 +9,12 @@ repos:
     -   id: check-merge-conflict
     -   id: check-symlinks
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: master
+    rev: v0.910-1
     hooks:
     -   id: mypy
         additional_dependencies: ['git+https://github.com/numpy/numpy-stubs']
 -   repo: https://github.com/PyCQA/flake8
-    rev: master
+    rev: 4.0.1
     hooks:
     -   id: flake8
         args:
