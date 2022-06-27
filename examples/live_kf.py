@@ -9,7 +9,7 @@ if __name__ == '__main__':  # Generating sympy
   from rednose.helpers.sympy_helpers import euler_rotate, quat_matrix_r, quat_rotate
   from rednose.helpers.ekf_sym import gen_code
 else:
-  from rednose.helpers.ekf_sym_pyx import EKF_sym  # pylint: disable=no-name-in-module
+  from rednose.helpers.ekf_sym_pyx import EKF_sym_pyx  # pylint: disable=no-name-in-module
 
 EARTH_GM = 3.986005e14  # m^3/s^2 (gravitational constant * mass of earth)
 
@@ -258,7 +258,7 @@ class LiveKalman():
                       ObservationKind.ECEF_POS: np.diag([5**2, 5**2, 5**2])}
 
     # init filter
-    self.filter = EKF_sym(generated_dir, self.name, self.Q, self.initial_x, np.diag(self.initial_P_diag), self.dim_state, self.dim_state_err)
+    self.filter = EKF_sym_pyx(generated_dir, self.name, self.Q, self.initial_x, np.diag(self.initial_P_diag), self.dim_state, self.dim_state_err)
 
   @property
   def x(self):
