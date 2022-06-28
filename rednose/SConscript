@@ -11,9 +11,9 @@ ekf_sym_cc = env.Object("#rednose/helpers/ekf_sym.cc")
 common_ekf = "#rednose/helpers/common_ekf.cc"
 
 found = {}
-for target, (command, combined_lib, extra_generated) in rednose_config['to_build'].items():
+for target, (command, *args) in rednose_config['to_build'].items():
   if File(command).exists():
-    found[target] = (command, combined_lib, extra_generated)
+    found[target] = (command, *args)
 
 lib_target = [common_ekf]
 for target, (command, combined_lib, extra_generated, deps) in found.items():
