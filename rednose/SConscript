@@ -16,13 +16,13 @@ for target, (command, combined_lib, extra_generated) in rednose_config['to_build
     found[target] = (command, combined_lib, extra_generated)
 
 lib_target = [common_ekf]
-for target, (command, combined_lib, extra_generated) in found.items():
+for target, (command, combined_lib, extra_generated, deps) in found.items():
   target_files = File([f'{generated_folder}/{target}.cpp', f'{generated_folder}/{target}.h'])
   extra_generated = [File(f'{generated_folder}/{x}') for x in extra_generated]
   command_file = File(command)
 
   env.Command(target_files + extra_generated,
-              [templates, command_file, sympy_helpers, ekf_sym],
+              [templates, command_file, sympy_helpers, ekf_sym] + deps,
               command_file.get_abspath() + " " + target + " " + Dir(generated_folder).get_abspath())
 
   if combined_lib:
