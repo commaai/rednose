@@ -98,7 +98,7 @@ class FeatureHandler():
     real = np.isfinite(last_idxs)
     self.tracks[last_idxs[real].astype(int)] = self.tracks[real]
 
-    mask = np.ones(self.MAX_TRACKS, np.bool)
+    mask = np.ones(self.MAX_TRACKS, bool)
     mask[last_idxs[real].astype(int)] = 0
     empty_idxs = np.arange(self.MAX_TRACKS)[mask]
 
