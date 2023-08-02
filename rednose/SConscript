@@ -37,7 +37,7 @@ lenv["LINKFLAGS"] += [libkf[0].get_labspath()]
 
 # for SWAGLOG support
 if common != "":
-  lenv["LIBS"] = ['zmq', common] + lenv["LIBS"]
+  lenv["LIBS"] = ['zmq', "json11", common] + lenv["LIBS"]
 
 ekf_sym_so = lenv.Program('#rednose/helpers/ekf_sym_pyx.so', [ekf_sym_pyx, ekf_sym_cc, common_ekf])
 lenv.Depends(ekf_sym_so, libkf)
