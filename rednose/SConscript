@@ -1,4 +1,4 @@
-Import('env', 'envCython', 'arch', 'rednose_config', 'common')
+Import('env', 'envCython', 'rednose_config', 'common')
 
 generated_folder = rednose_config['generated_folder']
 
