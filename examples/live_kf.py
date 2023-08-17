@@ -258,22 +258,22 @@ class LiveKalman():
                       ObservationKind.ECEF_POS: np.diag([5**2, 5**2, 5**2])}
 
     # init filter
-    self.filter = EKF_sym_pyx(generated_dir, self.name, self.Q, self.initial_x, np.diag(self.initial_P_diag), self.dim_state, self.dim_state_err)
+    self.filter_func = EKF_sym_pyx(generated_dir, self.name, self.Q, self.initial_x, np.diag(self.initial_P_diag), self.dim_state, self.dim_state_err)
 
   @property
   def x(self):
-    return self.filter.state()
+    return self.filter_func.state()
 
   @property
   def t(self):
-    return self.filter.filter_time
+    return self.filter_func.filter_time
 
   @property
   def P(self):
-    return self.filter.covs()
+    return self.filter_func.covs()
 
   def rts_smooth(self, estimates):
-    return self.filter.rts_smooth(estimates, norm_quats=True)
+    return self.filter_func.rts_smooth(estimates, norm_quats=True)
 
   def init_state(self, state, covs_diag=None, covs=None, filter_time=None):
     if covs_diag is not None:
@@ -281,8 +281,8 @@ class LiveKalman():
     elif covs is not None:
       P = covs
     else:
-      P = self.filter.covs()
-    self.filter.init_state(state, P, filter_time)
+      P = self.filter_func.covs()
+    self.filter_func.init_state(state, P, filter_time)
 
   def predict_and_observe(self, t, kind, data):
     if len(data) > 0:
@@ -294,16 +294,16 @@ class LiveKalman():
     elif kind == ObservationKind.ODOMETRIC_SPEED:
       r = self.predict_and_update_odo_speed(data, t, kind)
     else:
-      r = self.filter.predict_and_update_batch(t, kind, data, self.get_R(kind, len(data)))
+      r = self.filter_func.predict_and_update_batch(t, kind, data, self.get_R(kind, len(data)))
 
     # Normalize quats
-    quat_norm = np.linalg.norm(self.filter.x[3:7, 0])
+    quat_norm = np.linalg.norm(self.filter_func.x[3:7, 0])
 
     # Should not continue if the quats behave this weirdly
     if not (0.1 < quat_norm < 10):
       raise KalmanError("Kalman filter quaternions unstable")
 
-    self.filter.x[States.ECEF_ORIENTATION, 0] = self.filter.x[States.ECEF_ORIENTATION, 0] / quat_norm
+    self.filter_func.x[States.ECEF_ORIENTATION, 0] = self.filter_func.x[States.ECEF_ORIENTATION, 0] / quat_norm
 
     return r
 
@@ -320,21 +320,21 @@ class LiveKalman():
     R = np.zeros((len(speed), 1, 1))
     for i, _ in enumerate(z):
       R[i, :, :] = np.diag([0.2**2])
-    return self.filter.predict_and_update_batch(t, kind, z, R)
+    return self.filter_func.predict_and_update_batch(t, kind, z, R)
 
   def predict_and_update_odo_trans(self, trans, t, kind):
     z = trans[:, :3]
     R = np.zeros((len(trans), 3, 3))
     for i, _ in enumerate(z):
         R[i, :, :] = np.diag(trans[i, 3:]**2)
-    return self.filter.predict_and_update_batch(t, kind, z, R)
+    return self.filter_func.predict_and_update_batch(t, kind, z, R)
 
   def predict_and_update_odo_rot(self, rot, t, kind):
     z = rot[:, :3]
     R = np.zeros((len(rot), 3, 3))
     for i, _ in enumerate(z):
         R[i, :, :] = np.diag(rot[i, 3:]**2)
-    return self.filter.predict_and_update_batch(t, kind, z, R)
+    return self.filter_func.predict_and_update_batch(t, kind, z, R)
 
 
 if __name__ == "__main__":
