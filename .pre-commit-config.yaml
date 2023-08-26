@@ -13,20 +13,7 @@ repos:
     hooks:
     -   id: mypy
         additional_dependencies: ['git+https://github.com/numpy/numpy-stubs']
--   repo: https://github.com/PyCQA/flake8
-    rev: 4.0.1
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.0.282
     hooks:
-    -   id: flake8
-        args:
-        - --select=F,E112,E113,E304,E501,E502,E701,E702,E703,E71,E72,E731,W191,W6
-        - --max-line-length=160
-        - --statistics
--   repo: local
-    hooks:
-    -   id: pylint
-        name: pylint
-        entry: pylint
-        language: system
-        types: [python]
-        args:
-        - --disable=C,R,W0613,W0511,W0212,W0201,W0311,W0106,W0603,W0621,W0703,E1136
+    - id: ruff
