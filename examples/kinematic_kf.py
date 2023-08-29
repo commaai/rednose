@@ -73,7 +73,7 @@ class KinematicKalman(KalmanFilter):
     dim_state_err = self.initial_P_diag.shape[0]
 
     # init filter
-    self.filter_func = EKF_sym_pyx(generated_dir, self.name, self.Q, self.initial_x, np.diag(self.initial_P_diag), dim_state, dim_state_err)
+    self.filter = EKF_sym_pyx(generated_dir, self.name, self.Q, self.initial_x, np.diag(self.initial_P_diag), dim_state, dim_state_err)
 
 
 if __name__ == "__main__":
