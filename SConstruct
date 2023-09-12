@@ -1,9 +1,16 @@
 import os
+import platform
 import subprocess
 import sysconfig
 import numpy as np
 
 arch = subprocess.check_output(["uname", "-m"], encoding='utf8').rstrip()
+if platform.system() == "Darwin":
+  target = "Darwin"
+elif platform.system() == "Linux":
+  target = f"linux-{arch}"
+else:
+  raise Exception("Unsupported platform: ", platform.system())
 
 common = ''
 
@@ -44,11 +51,8 @@ envCython = env.Clone()
 envCython["CCFLAGS"] += ["-Wno-#warnings", "-Wno-shadow", "-Wno-deprecated-declarations"]
 
 envCython["LIBS"] = []
-if arch == "Darwin":
+if target == "Darwin":
   envCython["LINKFLAGS"] = ["-bundle", "-undefined", "dynamic_lookup"]
-elif arch == "aarch64":
-  envCython["LINKFLAGS"] = ["-shared"]
-  envCython["LIBS"] = [os.path.basename(python_path)]
 else:
   envCython["LINKFLAGS"] = ["-pthread", "-shared"]
 
@@ -64,5 +68,5 @@ rednose_config = {
   },
 }
 
-Export('env', 'envCython', 'arch', 'rednose_config', 'common')
+Export('env', 'envCython', 'rednose_config', 'common')
 SConscript(['#rednose/SConscript'])
