@@ -9,7 +9,8 @@ if common != "":
   # for SWAGLOG support
   libs = ['zmq', common]
 
-rednose = env.SharedLibrary("helpers/ekf_sym", cc_sources, LIBS=libs)
-rednose_python = envCython.Program("helpers/ekf_sym_pyx.so", "helpers/ekf_sym_pyx.pyx", LIBS=[rednose] + libs + envCython["LIBS"])
+ekf_objects = env.SharedObject(cc_sources)
+rednose = env.Library("helpers/ekf_sym", ekf_objects, LIBS=libs)
+rednose_python = envCython.Program("helpers/ekf_sym_pyx.so", ["helpers/ekf_sym_pyx.pyx", ekf_objects], LIBS=libs + envCython["LIBS"])
 
 Export('rednose', 'rednose_python')
