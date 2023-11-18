@@ -7,11 +7,13 @@ cimport cython
 from libcpp.string cimport string
 from libcpp.vector cimport vector
 from libcpp cimport bool
+from posix.dlfcn cimport dlopen, dlsym, dlerror, RTLD_NOW, RTLD_GLOBAL
 cimport numpy as np
 
 import numpy as np
 
-from rednose.helpers import load_code
+import os
+import platform
 
 
 cdef extern from "<optional>" namespace "std" nogil:
@@ -20,11 +22,8 @@ cdef extern from "<optional>" namespace "std" nogil:
     bool has_value()
     T& value()
 
-cdef extern from "rednose/helpers/common_ekf.h":
-  cdef cppclass EKF:
-    pass
-
-  cdef EKF* ekf_lookup(string name)
+cdef extern from "rednose/helpers/ekf_load.h":
+  cdef void ekf_load_and_register(string directory, string name)
 
 cdef extern from "rednose/helpers/ekf_sym.h" namespace "EKFS":
   cdef cppclass MapVectorXd "Eigen::Map<Eigen::VectorXd>":
@@ -87,12 +86,6 @@ cdef np.ndarray[np.float64_t, ndim=1, mode="c"] vector_to_numpy(VectorXd arr):
   cdef double[:] mem_view = <double[:arr.rows()]>arr.data()
   return np.copy(np.asarray(mem_view, dtype=np.double, order="C"))
 
-cdef ekf_load_code_if_needed(str directory, str name):
-  if ekf_lookup(name.encode('utf8')) is not cython.NULL:
-    return
-
-  load_code(directory, name)
-
 cdef class EKF_sym_pyx:
   cdef EKFSym* ekf
   def __cinit__(self, str gen_dir, str name, np.ndarray[np.float64_t, ndim=2] Q,
@@ -100,7 +93,7 @@ cdef class EKF_sym_pyx:
       int dim_main_err, int N=0, int dim_augment=0, int dim_augment_err=0, list maha_test_kinds=[],
       list quaternion_idxs=[], list global_vars=[], double max_rewind_age=1.0, logger=None):
     # TODO logger
-    ekf_load_code_if_needed(gen_dir, name)
+    ekf_load_and_register(gen_dir.encode('utf8'), name.encode('utf8'))
 
     cdef np.ndarray[np.float64_t, ndim=2, mode='c'] Q_b = np.ascontiguousarray(Q, dtype=np.double)
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] x_initial_b = np.ascontiguousarray(x_initial, dtype=np.double)

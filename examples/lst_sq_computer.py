@@ -50,7 +50,7 @@ class LstSqComputer():
     sympy_functions = generate_residual(K)
     header, sympy_code = sympy_into_c(sympy_functions)
 
-    code = "\n#include \"rednose/helpers/common_ekf.h\"\n"
+    code = "\n#include \"rednose/helpers/ekf.h\"\n"
     code += "\n#define KDIM %d\n" % K
     code += "extern \"C\" {\n"
     code += sympy_code

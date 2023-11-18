@@ -31,13 +31,3 @@ struct EKF {
   std::unordered_map<std::string, void (*)(double)> sets = {};
   std::unordered_map<std::string, extra_routine_t> extra_routines = {};
 };
-
-std::vector<const EKF*>& get_ekfs();
-const EKF* ekf_lookup(const std::string& ekf_name);
-
-void ekf_register(const EKF* ekf);
-
-#define ekf_init(ekf) \
-static void __attribute__((constructor)) do_ekf_init_ ## ekf(void) { \
-  ekf_register(&ekf); \
-}
