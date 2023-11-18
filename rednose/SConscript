@@ -4,10 +4,10 @@ cc_sources = [
   "helpers/ekf_load.cc",
   "helpers/ekf_sym.cc",
 ]
-libs = []
+libs = ["dl"]
 if common != "":
   # for SWAGLOG support
-  libs = ['zmq', common]
+  libs += [common, 'zmq']
 
 ekf_objects = env.SharedObject(cc_sources)
 rednose = env.SharedLibrary("helpers/ekf_sym", ekf_objects, LIBS=libs)

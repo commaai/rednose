@@ -29,11 +29,9 @@ class CompileFilterMethod(BaseRednoseCompileMethod):
 
 
 def generate(env):
-  rednose_dir = env["REDNOSE_ROOT"]
-
-  templates = Glob(f"{rednose_dir}/rednose/templates/*")
-  sympy_helpers = File(f"{rednose_dir}/rednose/helpers/sympy_helpers.py")
-  ekf_sym = File(f"{rednose_dir}/rednose/helpers/ekf_sym.py")
+  templates = env.Glob("$REDNOSE_ROOT/rednose/templates/*")
+  sympy_helpers = env.File("$REDNOSE_ROOT/rednose/helpers/sympy_helpers.py")
+  ekf_sym = env.File("$REDNOSE_ROOT/rednose/helpers/ekf_sym.py")
 
   gen_script_deps = templates + [sympy_helpers, ekf_sym]
   filter_lib_deps = []
