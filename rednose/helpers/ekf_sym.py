@@ -200,11 +200,7 @@ def gen_code(folder, name, f_sym, dt_sym, x_sym, obs_eqs, dim_x, dim_err, eskf_p
     post_code += f"    {{ \"{f}\", {name}_{f} }},\n"
   post_code += "  },\n"
   post_code += "};\n\n"
-  post_code += "extern \"C\" {\n"
-  post_code += "  void* ekf_get() {\n"
-  post_code += f"    return (void*)&{name};\n"
-  post_code += "  }\n"
-  post_code += "}\n\n"
+  post_code += f"ekf_lib_init({name})\n"
 
   # merge code blocks
   header += "}"
