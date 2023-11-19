@@ -1,6 +1,6 @@
 import platform
 
-from SCons.Script import Dir, File, Glob
+from SCons.Script import Dir, File
 
 
 def compile_single_filter(env, target, filter_gen_script, output_dir, extra_gen_artifacts, script_deps):
