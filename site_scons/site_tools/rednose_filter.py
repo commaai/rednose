@@ -25,9 +25,9 @@ class BaseRednoseCompileMethod:
 class CompileFilterMethod(BaseRednoseCompileMethod):
   def __call__(self, env, target, filter_gen_script, output_dir, extra_gen_artifacts=[], gen_script_deps=[]):
     objects = compile_single_filter(env, target, filter_gen_script, output_dir, extra_gen_artifacts, self.base_py_deps + gen_script_deps)
-    linker_flags = env.get('LINKFLAGS', [])
+    linker_flags = env.get("LINKFLAGS", [])
     if platform.system() == "Darwin":
-      linker_flags = ['-undefined dynamic_lookup']
+      linker_flags = ["-undefined", "dynamic_lookup"]
     lib_target = env.SharedLibrary(f'{output_dir}/{target}', [self.base_cc_deps, objects], LINKFLAGS=linker_flags)
 
     return lib_target
