@@ -7,13 +7,9 @@ cimport cython
 from libcpp.string cimport string
 from libcpp.vector cimport vector
 from libcpp cimport bool
-from posix.dlfcn cimport dlopen, dlsym, dlerror, RTLD_NOW, RTLD_GLOBAL
 cimport numpy as np
 
 import numpy as np
-
-import os
-import platform
 
 
 cdef extern from "<optional>" namespace "std" nogil:
