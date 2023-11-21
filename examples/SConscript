@@ -17,18 +17,3 @@ env.RednoseCompileFilter(
   filter_gen_script="test_compare.py",
   output_dir=gen_dir,
 )
-env.RednoseCompileFilter(
-  target="pos_computer_4",
-  filter_gen_script="lst_sq_computer.py",
-  output_dir=gen_dir,
-)
-env.RednoseCompileFilter(
-  target="pos_computer_5",
-  filter_gen_script="lst_sq_computer.py",
-  output_dir=gen_dir,
-)
-env.RednoseCompileFilter(
-  target="feature_handler_5",
-  filter_gen_script="feature_handler.py",
-  output_dir=gen_dir,
-)
