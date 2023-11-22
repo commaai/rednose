@@ -38,11 +38,11 @@ class TestKinematic(unittest.TestCase):
 
       # Retrieve kf values
       state = kf.x
-      xs_kf.append(float(state[States.POSITION]))
-      vs_kf.append(float(state[States.VELOCITY]))
+      xs_kf.append(float(state[States.POSITION].item()))
+      vs_kf.append(float(state[States.VELOCITY].item()))
       std = np.sqrt(kf.P)
-      xs_kf_std.append(float(std[States.POSITION, States.POSITION]))
-      vs_kf_std.append(float(std[States.VELOCITY, States.VELOCITY]))
+      xs_kf_std.append(float(std[States.POSITION, States.POSITION].item()))
+      vs_kf_std.append(float(std[States.VELOCITY, States.VELOCITY].item()))
 
       # Update simulation
       x += v * dt

@@ -36,7 +36,8 @@ env = Environment(
   CFLAGS="-std=gnu11",
   CXXFLAGS="-std=c++1z",
   CPPPATH=cpppath,
-  tools=["default", "cython"],
+  REDNOSE_ROOT=Dir("#").abspath,
+  tools=["default", "cython", "rednose_filter"],
 )
 
 # Cython build enviroment
@@ -52,17 +53,7 @@ elif arch == "aarch64":
 else:
   envCython["LINKFLAGS"] = ["-pthread", "-shared"]
 
-rednose_config = {
-  'generated_folder': '#examples/generated',
-  'to_build': {
-    'live': ('#examples/live_kf.py', True, [], []),
-    'kinematic': ('#examples/kinematic_kf.py', True, [], []),
-    'compare': ('#examples/test_compare.py', True, [], []),
-    'pos_computer_4': ('#rednose/helpers/lst_sq_computer.py', False, [], []),
-    'pos_computer_5': ('#rednose/helpers/lst_sq_computer.py', False, [], []),
-    'feature_handler_5': ('#rednose/helpers/feature_handler.py', False, [], []),
-  },
-}
+Export('env', 'envCython', 'common')
 
-Export('env', 'envCython', 'arch', 'rednose_config', 'common')
 SConscript(['#rednose/SConscript'])
+SConscript(['#examples/SConscript'])
