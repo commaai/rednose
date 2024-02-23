@@ -15,7 +15,7 @@ jobs:
     - name: Build docker image
       run: eval ${{ env.BUILD }}
     - name: Static analysis
-      run: ${{ env.RUN }}"git init && git add -A && pre-commit run --all"
+      run: ${{ env.RUN }} "git init && git add -A && pre-commit run --all"
     - name: Unit Tests
       run: ${{ env.RUN }} "cd /project/examples; python -m unittest discover"
   
