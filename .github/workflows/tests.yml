@@ -2,7 +2,7 @@ name: tests
 
 on: [push, pull_request]
 
-ENV:
+env:
   REGISTRY: ghcr.io/commaai
   BUILD: docker buildx build --pull --load --cache-to type=inline --cache-from $REGISTRY/rednose:latest -t rednose -f Dockerfile .
   RUN: docker run rednose bash -c
