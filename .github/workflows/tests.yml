@@ -11,7 +11,7 @@ jobs:
   test:
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Build docker image
       run: eval ${{ env.BUILD }}
     - name: Static analysis
@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-20.04
     if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && github.repository == 'commaai/rednose_repo'
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Build Docker image
       run: eval ${{ env.BUILD }}
     - name: Push to dockerhub
