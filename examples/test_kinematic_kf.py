@@ -47,7 +47,7 @@ class TestKinematic(unittest.TestCase):
       # Update simulation
       x += v * dt
 
-    xs, xs_meas, xs_kf, vs_kf, xs_kf_std, vs_kf_std = [np.asarray(a) for a in (xs, xs_meas, xs_kf, vs_kf, xs_kf_std, vs_kf_std)]
+    xs, xs_meas, xs_kf, vs_kf, xs_kf_std, vs_kf_std = (np.asarray(a) for a in (xs, xs_meas, xs_kf, vs_kf, xs_kf_std, vs_kf_std))
 
     self.assertAlmostEqual(xs_kf[-1], -0.010866289677966417)
     self.assertAlmostEqual(xs_kf_std[-1], 0.04477103863330089)
