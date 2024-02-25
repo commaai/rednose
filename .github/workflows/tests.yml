@@ -1,16 +1,42 @@
 name: tests
 
 on: [push, pull_request]
+env:
+  RUN: docker run -v $GITHUB_WORKSPACE:/project/rednose -w /project/rednose -e PYTHONWARNINGS="error,default::DeprecationWarning" --shm-size 1G --rm rednose /bin/bash -c
+  BUILD: docker buildx build --pull --load --cache-to type=inline --cache-from type=registry,ref=ghcr.io/commaai/rednose:latest -t rednose -f Dockerfile .
+  PYTHONWARNINGS: error
 
 jobs:
-  test:
+  unit-tests:
+    name: unit tests
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
     - name: Build docker image
-      run: docker build -t rednose .
-    - name: Static analysis
-      run: |
-        docker run rednose bash -c "git init && git add -A && pre-commit run --all"
+      run: eval "$BUILD"
     - name: Unit Tests
-      run: docker run rednose bash -c "cd /project/examples; python -m unittest discover"
+      run: ${{ env.RUN }} "cd /project/examples; python -m unittest discover"
+      
+  static-analysis:
+    name: static analysis
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build docker image
+      run: eval "$BUILD"
+    - name: Static analysis
+      run: ${{ env.RUN }} "git init && git add -A && pre-commit run --all"
+
+  docker-push:
+    name: docker push
+    runs-on: ubuntu-20.04
+    if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && github.repository == 'commaai/rednose'
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build Docker image
+      run: eval "$BUILD"
+    - name: Push to dockerhub
+      run: |
+        docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
+        docker tag opendbc ghcr.io/commaai/rednose:latest
+        docker push ghcr.io/commaai/rednose:latest 
