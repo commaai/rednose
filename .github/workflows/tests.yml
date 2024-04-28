@@ -9,7 +9,7 @@ env:
 
 jobs:
   test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: Build docker image
@@ -21,7 +21,7 @@ jobs:
   
   docker_push:
     name: docker push
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && github.repository == 'commaai/rednose'
     steps:
     - uses: actions/checkout@v4
