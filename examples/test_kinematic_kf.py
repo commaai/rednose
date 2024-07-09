@@ -2,8 +2,6 @@ import pytest
 import os
 import numpy as np
 import unittest
-import sys
-sys.path.append(os.path.dirname(__file__))
 
 from kinematic_kf import KinematicKalman, ObservationKind, States  # pylint: disable=import-error
 
