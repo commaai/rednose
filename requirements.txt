@@ -7,3 +7,4 @@ cffi
 scons
 pre-commit
 Cython
+pytest

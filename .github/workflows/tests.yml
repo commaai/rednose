@@ -17,8 +17,8 @@ jobs:
     - name: Static analysis
       run: ${{ env.RUN }} "git init && git add -A && pre-commit run --all"
     - name: Unit Tests
-      run: ${{ env.RUN }} "cd /project/examples; python -m unittest discover"
-  
+      run: ${{ env.RUN }} "pytest"
+
   docker_push:
     name: docker push
     runs-on: ubuntu-latest
