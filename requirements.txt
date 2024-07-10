@@ -8,3 +8,4 @@ scons
 pre-commit
 Cython
 pytest
+pytest-xdist

@@ -1,9 +1,8 @@
 import pytest
 import os
 import numpy as np
-import unittest
 
-from kinematic_kf import KinematicKalman, ObservationKind, States  # pylint: disable=import-error
+from .kinematic_kf import KinematicKalman, ObservationKind, States
 
 GENERATED_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'generated'))
 
@@ -81,7 +80,3 @@ class TestKinematic:
       plt.legend()
 
       plt.show()
-
-
-if __name__ == "__main__":
-  unittest.main()
