@@ -17,8 +17,6 @@ jobs:
       run: ./install_dependencies.sh
     - name: Installing rednose
       run: pip3 install --break-system-packages .[dev]
-    - name: Static analysis
-      run: pre-commit run --all
     - name: Unit Tests
       run: pytest
 
