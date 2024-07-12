@@ -49,3 +49,17 @@ A lot of measurements do not come from a Gaussian distribution and as such have 
 of the Kalman filter. This can cause a lot of performance issues if not dealt with. This library allows the use of a mahalanobis
 distance statistical test on the incoming measurements to deal with this. Note that good initialization is critical to prevent
 good measurements from being rejected.
+
+### Building
+On ubuntu:
+``` bash
+scripts/install_dependencies.sh
+pip install .
+```
+or run some test:
+On ubuntu:
+``` bash
+scripts/install_dependencies.sh
+pip install .[dev]
+pytest
+```
