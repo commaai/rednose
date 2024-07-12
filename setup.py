@@ -1,7 +1,6 @@
 from setuptools import Command, setup
 from setuptools.command.build import build
 import subprocess
-import os
 
 class SconsBuild(Command):
   def initialize_options(self) -> None:
