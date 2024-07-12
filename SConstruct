@@ -40,6 +40,8 @@ env = Environment(
   tools=["default", "cython", "rednose_filter"],
 )
 
+env.AppendENVPath('PYTHONPATH', '.')
+
 # Cython build enviroment
 envCython = env.Clone()
 envCython["CCFLAGS"] += ["-Wno-#warnings", "-Wno-shadow", "-Wno-deprecated-declarations"]

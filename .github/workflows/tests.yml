@@ -2,33 +2,33 @@ name: tests
 
 on: [push, pull_request]
 
-env:
-  REGISTRY: ghcr.io/commaai
-  BUILD: docker buildx build --pull --load --cache-to type=inline --cache-from $REGISTRY/rednose:latest -t rednose -f Dockerfile .
-  RUN: docker run rednose bash -c
-
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
     steps:
     - uses: actions/checkout@v4
-    - name: Build docker image
-      run: eval ${{ env.BUILD }}
+    - uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Installing build dependencies
+      run: ./install_dependencies.sh
+    - name: Installing rednose
+      run: pip3 install --break-system-packages .[dev]
     - name: Static analysis
-      run: ${{ env.RUN }} "git init && git add -A && pre-commit run --all"
+      run: pre-commit run --all
     - name: Unit Tests
-      run: ${{ env.RUN }} "pytest"
+      run: pytest
 
-  docker_push:
-    name: docker push
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && github.repository == 'commaai/rednose'
+  static_analysis:
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v4
-    - name: Build Docker image
-      run: eval ${{ env.BUILD }}
-    - name: Push to dockerhub
-      run: |
-        docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
-        docker tag rednose ${{ env.REGISTRY }}/rednose:latest
-        docker push ${{ env.REGISTRY }}/rednose:latest
+    - name: Installing build dependencies
+      run: ./install_dependencies.sh
+    - name: Installing rednose
+      run: pip3 install --break-system-packages .[dev]
+    - name: Static analysis
+      run: pre-commit run --all

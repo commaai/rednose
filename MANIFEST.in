@@ -1,0 +1,5 @@
+exclude rednose/**/*.o
+include SConstruct
+include rednose/SConscript
+include examples/SConscript
+recursive-include site_scons *
