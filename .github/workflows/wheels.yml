@@ -8,7 +8,7 @@ jobs:
     strategy:
       matrix:
         image: ["manylinux_2_28_x86_64"]
-        python_version: [ {cp: cp39-cp39, py: 39}, {cp: cp310-cp310, py: 3.10}, {cp: cp311-cp311, py: 3.11}, {cp: cp312-cp312, py: 3.12} ]
+        python_version: [ {cp: "cp39-cp39", py: "39"}, {cp: "cp310-cp310", py: "3.10"}, {cp: "cp311-cp311", py: "3.11"}, {cp: "cp312-cp312", py: "3.12"} ]
     steps:
     - uses: actions/checkout@v4
     - name: Building wheel
