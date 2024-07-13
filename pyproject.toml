@@ -5,7 +5,7 @@ version = "0.1.0"
 
 dependencies = [
   "sympy",
-  "numpy",
+  "numpy<2.0",
   "scipy",
   "tqdm",
   "cffi",
@@ -22,7 +22,7 @@ dev = [
 ]
 
 [build-system]
-requires = ["setuptools","scons","Cython","numpy","sympy", "pytest", "cffi"]
+requires = ["setuptools","scons","Cython","numpy<2.0","sympy", "pytest", "cffi"]
 build-backend = "setuptools.build_meta"
 
 [tool.ruff]
