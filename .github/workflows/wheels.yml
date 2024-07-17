@@ -18,5 +18,5 @@ jobs:
       uses: pypa/cibuildwheel@v2.19.2
       env:
         CIBW_BUILD: "${{ matrix.python }}-${{ matrix.platform[1] }}"
-        CIBW_MANYLINUX_X86_64_IMAGE: "manylinux_2_28_x86_64"
+        CIBW_MANYLINUX_X86_64_IMAGE: "manylinux_2_28"
         CIBW_BEFORE_ALL_LINUX: "dnf install -y clang libffi-devel eigen3-devel"
