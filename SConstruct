@@ -40,8 +40,6 @@ env = Environment(
   tools=["default", "cython", "rednose_filter"],
 )
 
-env.AppendENVPath('PYTHONPATH', '.')
-
 # Cython build enviroment
 envCython = env.Clone()
 envCython["CCFLAGS"] += ["-Wno-#warnings", "-Wno-shadow", "-Wno-deprecated-declarations"]
@@ -58,4 +56,4 @@ else:
 Export('env', 'envCython', 'common')
 
 SConscript(['#rednose/SConscript'])
-SConscript(['#examples/SConscript'])
+SConscript(['#rednose/examples/SConscript'])

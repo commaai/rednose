@@ -22,7 +22,7 @@ dev = [
 ]
 
 [build-system]
-requires = ["setuptools","scons","Cython","numpy<2.0","sympy", "pytest", "cffi"]
+requires = ["setuptools", "scons", "Cython", "numpy<2.0", "sympy", "pytest", "cffi"]
 build-backend = "setuptools.build_meta"
 
 [tool.ruff]
