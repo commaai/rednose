@@ -4,12 +4,20 @@ on: [push, pull_request]
 
 jobs:
   wheels:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.platform[0] }}
     strategy:
+      fail-fast: false
       matrix:
-        image: ["manylinux_2_28_x86_64"]
-        python_version: [ {cp: "cp39-cp39", py: "39"}, {cp: "cp310-cp310", py: "39"}, {cp: "cp311-cp311", py: "3.11"}, {cp: "cp312-cp312", py: "3.12"} ]
+        platform:
+          - ['ubuntu-20.04, manylinux_x86_64']
+        python: ['cp311', 'cp312']
+
     steps:
     - uses: actions/checkout@v4
     - name: Building wheel
-      run: docker run -e PYPATH=/opt/python/${{ matrix.python_version.cp }} -e PYTHON_VERSION=${{ matrix.python_version.py }} --rm -v `pwd`:/project quay.io/pypa/${{ matrix.image }} /project/scripts/build-manylinux-wheel.sh
+      uses: pypa/cibuildwheel@v2.19.2
+      env:
+        uses:
+          CIBW_BUILD: "${{ matrix.python }}-${{ matrix.buildplat[1] }}"
+          CIBW_MANYLINUX_X86_64_IMAGE: "manylinux_2_28_x86_64"
+          CIBW_BEFORE_ALL_LINUX: "dnf install -y clang libffi-devel eigen3-devel"

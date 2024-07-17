@@ -1,6 +1,6 @@
 [project]
 name = "rednose"
-requires-python = ">= 3.9"
+requires-python = ">= 3.11"
 version = "0.1.0"
 
 dependencies = [
@@ -27,7 +27,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.ruff]
 line-length = 160
-target-version="py39"
+target-version="py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "PIE", "C4", "ISC", "RUF100", "A"]
