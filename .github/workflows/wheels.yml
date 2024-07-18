@@ -29,4 +29,4 @@ jobs:
         #CIBW_MANYLINUX_X86_64_IMAGE: "manylinux_2_28"
         CIBW_MANYLINUX_AARCH64_IMAGE: "manylinux_2_28"
         CIBW_ARCHS_LINUX: "aarch64"
-        CIBW_BEFORE_ALL_LINUX: "dnf install -y clang libffi-devel eigen3-devel"
+        CIBW_BEFORE_ALL_LINUX: "dnf install -y clang libffi-devel eigen3-devel python3.11-devel.aarch64"
