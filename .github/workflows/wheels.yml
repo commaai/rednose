@@ -29,3 +29,5 @@ jobs:
         CIBW_ARCHS: "${{ matrix.platform.arch }}"
         CIBW_BEFORE_ALL_LINUX: "dnf install -y clang libffi-devel eigen3-devel python${{ matrix.python.py }}-devel"
         CIBW_BEFORE_BUILD_MACOS: "brew install eigen && brew install --cask gcc-arm-embedded && brew install gcc@13"
+        CIBW_MANYLINUX_X86_64_IMAGE: "manylinux_2_28"
+        CIBW_MANYLINUX_AARCH64_IMAGE: "manylinux_2_28"
