@@ -59,7 +59,8 @@ envCython = env.Clone()
 envCython["CCFLAGS"] += ["-Wno-#warnings", "-Wno-shadow", "-Wno-deprecated-declarations"]
 
 envCython["LIBS"] = []
-if arch == "Darwin":
+if platform.processor() == "arm":
+  print('AAAAA:', arch)
   envCython["CPPPATH"] += [python_path, np.get_include()]
   envCython["LINKFLAGS"] = ["-bundle", "-undefined", "dynamic_lookup"]
 elif arch == "aarch64":
