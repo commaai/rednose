@@ -15,7 +15,7 @@ class SconsBuild(Command):
     pass
 
   def run(self) -> None:
-    subprocess.run(["scons -j$(nproc)"], shell=True).check_returncode()
+    subprocess.run(["scons -j$(nproc || sysctl -n hw.logicalcpu)"], shell=True).check_returncode()
 
 
 class CustomBuild(build):
