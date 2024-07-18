@@ -8,9 +8,9 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        platform: [ {os: "ubuntu-latest", target: "manylinux_x86_64"},
-                    {os: "ubuntu-latest", target: "manylinux_aarch64"},
-                    {os: "macos-14",      target: "macosx_arm64"     }]
+        platform: [ {os: "ubuntu-latest", target: "manylinux_x86_64",  arch: "x86_64"},
+                    {os: "ubuntu-latest", target: "manylinux_aarch64", arch: "aarch64"},
+                    {os: "macos-14",      target: "macosx_arm64"       arch: "arm64"}]
         python:   [ {cp: "cp311", py: "3.11"}, {cp: "cp312", py: "3.12"}]
 
     steps:
@@ -26,5 +26,6 @@ jobs:
       uses: pypa/cibuildwheel@v2.19.2
       env:
         CIBW_BUILD: "${{ matrix.python.cp }}-${{ matrix.platform.target }}"
+        CIBW_ARCHS: "${{ matrix.platform.arch }}"
         CIBW_BEFORE_ALL_LINUX: "dnf install -y clang libffi-devel eigen3-devel python${{ matrix.python.py }}-devel"
         CIBW_BEFORE_ALL_MACOS: "brew install eigen && brew install --cask gcc-arm-embedded && brew install gcc@13"
