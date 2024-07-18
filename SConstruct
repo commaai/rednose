@@ -19,16 +19,15 @@ cpppath = [
   np.get_include(),
 ]
 
-if platform.processor() == "arm":
+print('AAAAA:', arch)
+#if platform.processor() == "arm":
+if arch == "Darwin":
   brew_prefix = subprocess.check_output(['brew', '--prefix'], encoding='utf8').strip()
-  print('xxxxxxx', brew_prefix)
   libpath += [
     f"{brew_prefix}/lib",
-    "/opt/homebrew/lib"
   ]
   cpppath += [
     f"{brew_prefix}/include",
-    "/opt/homebrew/include"
   ]
 
 env = Environment(
@@ -59,8 +58,9 @@ envCython = env.Clone()
 envCython["CCFLAGS"] += ["-Wno-#warnings", "-Wno-shadow", "-Wno-deprecated-declarations"]
 
 envCython["LIBS"] = []
-if platform.processor() == "arm":
-  print('AAAAA:', arch)
+#if platform.processor() == "arm":
+if arch == "Darwin":
+  print('aaaaaaAAAAA:', arch)
   envCython["CPPPATH"] += [python_path, np.get_include()]
   envCython["LINKFLAGS"] = ["-bundle", "-undefined", "dynamic_lookup"]
 elif arch == "aarch64":
