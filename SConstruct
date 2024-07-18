@@ -5,9 +5,11 @@ import sysconfig
 import numpy as np
 
 arch = subprocess.check_output(["uname", "-m"], encoding='utf8').rstrip()
+if platform.system() == "Darwin":
+  arch = "Darwin"
 
 common = ''
-python_path = sysconfig.get_paths()['include']
+py_include = sysconfig.get_paths()['include']
 
 libpath = []
 cpppath = [
@@ -15,12 +17,10 @@ cpppath = [
   '#rednose',
   '#rednose/examples/generated',
   '/usr/lib/include',
-  python_path,
+  py_include,
   np.get_include(),
 ]
 
-print('AAAAA:', arch)
-#if platform.processor() == "arm":
 if arch == "Darwin":
   brew_prefix = subprocess.check_output(['brew', '--prefix'], encoding='utf8').strip()
   libpath += [
@@ -56,16 +56,14 @@ env = Environment(
 # Cython build enviroment
 envCython = env.Clone()
 envCython["CCFLAGS"] += ["-Wno-#warnings", "-Wno-shadow", "-Wno-deprecated-declarations"]
+envCython["CPPPATH"] += [py_include, np.get_include()]
 
 envCython["LIBS"] = []
-#if platform.processor() == "arm":
 if arch == "Darwin":
-  print('aaaaaaAAAAA:', arch)
-  envCython["CPPPATH"] += [python_path, np.get_include()]
   envCython["LINKFLAGS"] = ["-bundle", "-undefined", "dynamic_lookup"]
 elif arch == "aarch64":
   envCython["LINKFLAGS"] = ["-shared"]
-  envCython["LIBS"] = [os.path.basename(python_path)]
+  envCython["LIBS"] = [os.path.basename(py_include)]
 else:
   envCython["LINKFLAGS"] = ["-pthread", "-shared"]
 
