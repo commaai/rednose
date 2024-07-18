@@ -10,8 +10,8 @@ jobs:
       matrix:
         platform: [ {os: "ubuntu-latest", target: "manylinux_x86_64",  arch: "x86_64"},
                     {os: "ubuntu-latest", target: "manylinux_aarch64", arch: "aarch64"},
-                    {os: "macos-14",      target: "macosx_arm64"       arch: "arm64"}]
-        python:   [ {cp: "cp311", py: "3.11"}, {cp: "cp312", py: "3.12"}]
+                    {os: "macos-14",      target: "macosx_arm64",      arch: "arm64"} ]
+        python:   [ {cp: "cp311", py: "3.11"}, {cp: "cp312", py: "3.12"} ]
 
     steps:
     - uses: actions/checkout@v4
