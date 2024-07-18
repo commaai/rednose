@@ -1,4 +1,5 @@
 import os
+import platform
 import subprocess
 import sysconfig
 import numpy as np
@@ -18,13 +19,16 @@ cpppath = [
   np.get_include(),
 ]
 
-if arch == "Darwin":
+if platform.processor() == "arm":
   brew_prefix = subprocess.check_output(['brew', '--prefix'], encoding='utf8').strip()
+  print('xxxxxxx', brew_prefix)
   libpath += [
     f"{brew_prefix}/lib",
+    "/opt/homebrew/lib"
   ]
   cpppath += [
     f"{brew_prefix}/include",
+    "/opt/homebrew/include"
   ]
 
 env = Environment(
@@ -42,7 +46,7 @@ env = Environment(
     "-Werror=format-extra-args",
     "-Wshadow",
   ],
-  LIBPATH=libpath + ["#rednose/examples/generated"],
+  LIBPATH=libpath + ["#rednose/examples/generated", '/opt/homebrew/lib'],
   CFLAGS="-std=gnu11",
   CXXFLAGS="-std=c++1z",
   CPPPATH=cpppath,
