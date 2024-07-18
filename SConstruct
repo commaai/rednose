@@ -6,8 +6,9 @@ import numpy as np
 arch = subprocess.check_output(["uname", "-m"], encoding='utf8').rstrip()
 
 common = ''
-
 python_path = sysconfig.get_paths()['include']
+
+libpath = []
 cpppath = [
   '#',
   '#rednose',
@@ -16,6 +17,15 @@ cpppath = [
   python_path,
   np.get_include(),
 ]
+
+if arch == "Darwin":
+  brew_prefix = subprocess.check_output(['brew', '--prefix'], encoding='utf8').strip()
+  libpath += [
+    f"{brew_prefix}/lib",
+  ]
+  cpppath += [
+    f"{brew_prefix}/include",
+  ]
 
 env = Environment(
   ENV=os.environ,
@@ -32,7 +42,7 @@ env = Environment(
     "-Werror=format-extra-args",
     "-Wshadow",
   ],
-  LIBPATH=["#rednose/examples/generated"],
+  LIBPATH=libpath + ["#rednose/examples/generated"],
   CFLAGS="-std=gnu11",
   CXXFLAGS="-std=c++1z",
   CPPPATH=cpppath,
