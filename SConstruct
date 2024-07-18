@@ -46,7 +46,7 @@ env = Environment(
     "-Werror=format-extra-args",
     "-Wshadow",
   ],
-  LIBPATH=libpath + ["#rednose/examples/generated", '/opt/homebrew/lib'],
+  LIBPATH=libpath + ["#rednose/examples/generated"],
   CFLAGS="-std=gnu11",
   CXXFLAGS="-std=c++1z",
   CPPPATH=cpppath,
@@ -60,6 +60,7 @@ envCython["CCFLAGS"] += ["-Wno-#warnings", "-Wno-shadow", "-Wno-deprecated-decla
 
 envCython["LIBS"] = []
 if arch == "Darwin":
+  envCython["CPPPATH"] += [python_path, np.get_include()]
   envCython["LINKFLAGS"] = ["-bundle", "-undefined", "dynamic_lookup"]
 elif arch == "aarch64":
   envCython["LINKFLAGS"] = ["-shared"]
