@@ -40,3 +40,7 @@ flake8-implicit-str-concat.allow-multiline=false
 
 [tool.pytest.ini_options]
 addopts = "--durations=10 -n auto"
+
+[tool.cibuildwheel.linux]
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"

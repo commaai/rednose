@@ -4,14 +4,14 @@ on: [push, pull_request]
 
 jobs:
   wheels:
-    runs-on: ${{ matrix.platform[0] }}
+    runs-on: ${{ matrix.platform.os }}
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
-        platform:
-          - [ubuntu-latest, manylinux_aarch64]
-          #- [ubuntu-latest, manylinux_x86_64]
-        python: ['cp311', 'cp312']
+        platform: [ {os: "ubuntu-latest", target: "manylinux_x86_64"},
+                    {os: "ubuntu-latest", target: "manylinux_aarch64"},
+                    {os: "macos-14",      target: "macosx_arm64"     }]
+        python:   [ {cp: "cp311", py: "3.11"}, {cp: "cp312", py: "3.12"}]
 
     steps:
     - uses: actions/checkout@v4
@@ -25,8 +25,6 @@ jobs:
     - name: Building wheel
       uses: pypa/cibuildwheel@v2.19.2
       env:
-        CIBW_BUILD: "${{ matrix.python }}-${{ matrix.platform[1] }}"
-        #CIBW_MANYLINUX_X86_64_IMAGE: "manylinux_2_28"
-        CIBW_MANYLINUX_AARCH64_IMAGE: "manylinux_2_28"
-        CIBW_ARCHS_LINUX: "aarch64"
-        CIBW_BEFORE_ALL_LINUX: "dnf install -y clang libffi-devel eigen3-devel python3.11-devel.aarch64"
+        CIBW_BUILD: "${{ matrix.python.cp }}-${{ matrix.platform.target }}"
+        CIBW_BEFORE_ALL_LINUX: "dnf install -y clang libffi-devel eigen3-devel python${{ matrix.python.py }}-devel"
+        CIBW_BEFORE_ALL_MACOS: "brew install eigen && brew install --cask gcc-arm-embedded && brew install gcc@13"
