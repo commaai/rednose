@@ -39,13 +39,10 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-    - name: Installing python requirements
-      run:
-        python -m pip install -r requirements.txt
     - name: Installing ubuntu requirements
       run:
         sudo apt-get install -y --no-install-recommends clang libeigen3-dev
     - name: Installing rednose
-      run: pip install -e .
+      run: pip install -e .[dev]
     - name: Running all tests
       run: pytest
