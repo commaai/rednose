@@ -28,7 +28,7 @@ jobs:
         python -m pip install -r requirements.txt
     - name: Installing ubuntu requirements
       run:
-        apt-get install -y --no-install-recommends clang libeigen3-dev
+        sudo apt-get install -y --no-install-recommends clang libeigen3-dev
     - name: Building
       run: scons -j$(nproc)
 
@@ -44,7 +44,7 @@ jobs:
         python -m pip install -r requirements.txt
     - name: Installing ubuntu requirements
       run:
-        apt-get install -y --no-install-recommends clang libeigen3-dev
+        sudo apt-get install -y --no-install-recommends clang libeigen3-dev
     - name: Installing rednose
       run: pip install -e .
     - name: Running all tests
