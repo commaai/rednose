@@ -28,7 +28,7 @@ jobs:
         CIBW_BUILD: "${{ matrix.python.cp }}-${{ matrix.platform.target }}"
         CIBW_ARCHS: "${{ matrix.platform.arch }}"
         CIBW_BEFORE_ALL_LINUX: "dnf install -y clang libffi-devel eigen3-devel python${{ matrix.python.py }}-devel"
-        CIBW_BEFORE_BUILD_MACOS: {project}/scripts/macos_dependencies.sh
+        CIBW_BEFORE_BUILD_MACOS: "bash {project}/scripts/macos_dependencies.sh"
         CIBW_MANYLINUX_X86_64_IMAGE: "manylinux_2_28"
         CIBW_MANYLINUX_AARCH64_IMAGE: "manylinux_2_28"
         CIBW_TEST_COMMAND: pip install -r {project}/requirements.txt && pytest {package}
