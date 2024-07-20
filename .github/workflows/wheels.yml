@@ -40,7 +40,7 @@ jobs:
         python-version: ${{ matrix.python.py }}
 
     - name: Installing the wheel
-      if: ${{ matrix.platform.arch }} != 'aarch64'
+      if: ${{ matrix.platform.arch != 'aarch64' }}
       run: |
         pip install --break-system-packages ./wheelhouse/*.whl
 
