@@ -28,7 +28,24 @@ jobs:
         CIBW_BUILD: "${{ matrix.python.cp }}-${{ matrix.platform.target }}"
         CIBW_ARCHS: "${{ matrix.platform.arch }}"
         CIBW_BEFORE_ALL_LINUX: "dnf install -y clang libffi-devel eigen3-devel python${{ matrix.python.py }}-devel"
-        CIBW_BEFORE_BUILD_MACOS: "brew install eigen && brew install --cask gcc-arm-embedded && brew install gcc@13"
+        CIBW_BEFORE_BUILD_MACOS: {project}/scripts/macos_dependencies.sh
         CIBW_MANYLINUX_X86_64_IMAGE: "manylinux_2_28"
         CIBW_MANYLINUX_AARCH64_IMAGE: "manylinux_2_28"
         CIBW_TEST_COMMAND: pip install -r {project}/requirements.txt && pytest {package}
+
+
+    - uses: actions/setup-python@v5
+      if: ${{ matrix.platform.arch }} != 'aarch64'
+      with:
+        python-version: ${{ matrix.python.py }}
+
+    - name: Installing the wheel
+      if: ${{ matrix.platform.arch }} != 'aarch64'
+      run: |
+        pip install --break-system-packages ./wheelhouse/*.whl
+
+    - name: Saving wheel
+      uses: actions/upload-artifact@v4
+      with:
+        name: cibw-wheels-${{ matrix.platform.target }}-${{ matrix.python.cp }}
+        path: ./wheelhouse/*.whl
