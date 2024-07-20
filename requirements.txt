@@ -48,6 +48,8 @@ scipy==1.14.0
     # via rednose (pyproject.toml)
 scons==4.8.0
     # via rednose (pyproject.toml)
+setuptools==71.0.4
+    # via rednose (pyproject.toml)
 sympy==1.13.1
     # via rednose (pyproject.toml)
 tqdm==4.66.4
