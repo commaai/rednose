@@ -1,5 +1,7 @@
 Import('env')
 
+env.AppendENVPath('PYTHONPATH', env["REDNOSE_ROOT"])
+
 gen_dir = Dir('generated/').abspath
 
 env.RednoseCompileFilter(
