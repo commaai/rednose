@@ -64,7 +64,6 @@ def cross(x):
   ret[0, 1], ret[0, 2] = -x[2], x[1]
   ret[1, 0], ret[1, 2] = x[2], -x[0]
   ret[2, 0], ret[2, 1] = -x[1], x[0]
-  sp.expand
   return ret
 
 
