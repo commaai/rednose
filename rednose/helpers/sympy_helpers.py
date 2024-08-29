@@ -69,14 +69,9 @@ def cross(x):
 
 
 def rot_to_euler(R):
-  return quat_to_euler(rot_to_quat(R))
-
-
-def quat_to_euler(quats):
-  q0, q1, q2, q3 = quats
-  gamma = sp.atan2(2 * (q0*q1 + q2*q3), 1 - 2 * (q1**2 + q2**2))
-  theta = sp.asin(2 * (q0*q2 - q3*q1))
-  psi = sp.atan2(2 * (q0*q3 + q1*q2), 1 - 2 * (q2**2 + q3**2))
+  gamma = sp.atan2(R[2, 1], R[2, 2])
+  theta = sp.asin(-R[2, 0])
+  psi = sp.atan2(R[1, 0], R[0, 0])
   return sp.Matrix([gamma, theta, psi])
 
 
@@ -109,14 +104,6 @@ def quat_rotate(q0, q1, q2, q3):
   return sp.Matrix([[q0**2 + q1**2 - q2**2 - q3**2, 2 * (q1 * q2 + q0 * q3), 2 * (q1 * q3 - q0 * q2)],
                     [2 * (q1 * q2 - q0 * q3), q0**2 - q1**2 + q2**2 - q3**2, 2 * (q2 * q3 + q0 * q1)],
                     [2 * (q1 * q3 + q0 * q2), 2 * (q2 * q3 - q0 * q1), q0**2 - q1**2 - q2**2 + q3**2]]).T
-
-
-def rot_to_quat(R):
-  q0 = sp.sqrt(1 + R[ 0, 0] + R[1, 1] + R[2, 2]) / 2
-  q1 = (R[2, 1] - R[1, 2]) / (4 * q0)
-  q2 = (R[0, 2] - R[2, 0]) / (4 * q0)
-  q3 = (R[1, 0] - R[0, 1]) / (4 * q0)
-  return sp.Matrix([q0, q1, q2, q3])
 
 
 def quat_matrix_l(p):
