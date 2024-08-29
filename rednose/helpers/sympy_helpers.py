@@ -27,6 +27,14 @@ def quat2rot(quats):
     return Rs
 
 
+def rot2quat(Rs):
+  q0 = sp.sqrt(1 + Rs[:, 0, 0] + Rs[:, 1, 1] + Rs[: 2, 2]) / 2
+  q1 = (Rs[:, 2, 1] - Rs[:, 1, 2]) / (4 * q0)
+  q2 = (Rs[:, 0, 2] - Rs[:, 2, 0]) / (4 * q0)
+  q3 = (Rs[:, 1, 0] - Rs[:, 0, 1]) / (4 * q0)
+  return sp.Matrix([q0, q1, q2, q3])
+
+
 def euler2quat(eulers):
   eulers = np.array(eulers)
   if len(eulers.shape) > 1:
@@ -52,8 +60,21 @@ def euler2quat(eulers):
   return quats.reshape(output_shape)
 
 
+def quat2euler(quats):
+  q0, q1, q2, q3 = quats[:, 0], quats[:, 1], quats[:, 2], quats[:, 3]
+  gamma = sp.atan2(2 * (q0*q1 + q2*q3), 1 - 2 * (q1**2 + q2**2))
+  theta = sp.asin(2 * (q0*q2 - q3*q1))
+  psi = sp.atan2(2 * (q0*q3 + q1*q2), 1 - 2 * (q2**2 + q3**2))
+  return sp.Matrix([gamma, theta, psi])
+
+
 def euler2rot(eulers):
   return quat2rot(euler2quat(eulers))
+
+
+def rot2euler(Rs):
+  return quat2euler(rot2quat(Rs))
+
 
 rotations_from_quats = quat2rot
 
