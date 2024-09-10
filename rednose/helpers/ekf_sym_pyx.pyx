@@ -141,7 +141,7 @@ cdef class EKF_sym_pyx:
   def predict(self, double t):
     self.ekf.predict(t)
 
-  def predict_and_update_batch(self, double t, int kind, z, R, extra_args=[[]], bool augment=False):
+  def predict_and_update_batch(self, double t, int kind, z, R, extra_args=[[]], bool augment=False, bool return_result=False):
     cdef vector[MapVectorXd] z_map
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] zi_b
     for zi in z:
@@ -163,7 +163,7 @@ cdef class EKF_sym_pyx:
       extra_args_map.push_back(args_map)
 
     cdef optional[Estimate] res = self.ekf.predict_and_update_batch(t, kind, z_map, R_map, extra_args_map, augment)
-    if not res.has_value():
+    if not return_result or not res.has_value():
       return None
 
     cdef VectorXd tmpvec
