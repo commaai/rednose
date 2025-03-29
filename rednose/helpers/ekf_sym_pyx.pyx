@@ -51,10 +51,10 @@ cdef extern from "rednose/helpers/ekf_sym.h" namespace "EKFS":
     vector[vector[double]] extra_args
 
   cdef cppclass EKFSym:
-    EKFSym(string name, MapMatrixXdr Q, MapVectorXd x_initial, MapMatrixXdr P_initial, int dim_main,
-        int dim_main_err, int N, int dim_augment, int dim_augment_err, vector[int] maha_test_kinds,
-        vector[int] quaternion_idxs, vector[string] global_vars, double max_rewind_age)
-    void init_state(MapVectorXd state, MapMatrixXdr covs, double filter_time)
+    EKFSym(const string &name, const MapMatrixXdr &Q, const MapVectorXd &x_initial, const MapMatrixXdr &P_initial, int dim_main,
+        int dim_main_err, int N, int dim_augment, int dim_augment_err, const vector[int] &maha_test_kinds,
+        const vector[int] &quaternion_idxs, const vector[string] &global_vars, double max_rewind_age)
+    void init_state(const MapVectorXd &state, const MapMatrixXdr &covs, double filter_time)
 
     VectorXd state()
     MatrixXdr covs()
@@ -64,8 +64,8 @@ cdef extern from "rednose/helpers/ekf_sym.h" namespace "EKFS":
     void reset_rewind()
 
     void predict(double t)
-    optional[Estimate] predict_and_update_batch(double t, int kind, vector[MapVectorXd] z, vector[MapMatrixXdr] z,
-        vector[vector[double]] extra_args, bool augment)
+    optional[Estimate] predict_and_update_batch(double t, int kind, const vector[MapVectorXd] &z, const vector[MapMatrixXdr] &z,
+        const vector[vector[double]] &extra_args, bool augment)
 
 # Functions like `numpy_to_matrix` are not possible, cython requires default
 # constructor for return variable types which aren't available with Eigen::Map

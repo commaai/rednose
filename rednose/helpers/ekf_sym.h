@@ -43,12 +43,12 @@ typedef struct Estimate {
 
 class EKFSym {
 public:
-  EKFSym(std::string name, Eigen::Map<MatrixXdr> Q, Eigen::Map<Eigen::VectorXd> x_initial,
-      Eigen::Map<MatrixXdr> P_initial, int dim_main, int dim_main_err, int N = 0, int dim_augment = 0,
-      int dim_augment_err = 0, std::vector<int> maha_test_kinds = std::vector<int>(),
-      std::vector<int> quaternion_idxs = std::vector<int>(),
-      std::vector<std::string> global_vars = std::vector<std::string>(), double max_rewind_age = 1.0);
-  void init_state(Eigen::Map<Eigen::VectorXd> state, Eigen::Map<MatrixXdr> covs, double filter_time);
+  EKFSym(const std::string &name, const Eigen::Map<MatrixXdr> &Q, const Eigen::Map<Eigen::VectorXd> &x_initial,
+      const Eigen::Map<MatrixXdr> &P_initial, int dim_main, int dim_main_err, int N = 0, int dim_augment = 0,
+      int dim_augment_err = 0, const std::vector<int> &maha_test_kinds = std::vector<int>(),
+      const std::vector<int> &quaternion_idxs = std::vector<int>(),
+      const std::vector<std::string> &global_vars = std::vector<std::string>(), double max_rewind_age = 1.0);
+  void init_state(const Eigen::Map<Eigen::VectorXd> &state, const Eigen::Map<MatrixXdr> &covs, double filter_time);
 
   Eigen::VectorXd state();
   MatrixXdr covs();
@@ -60,16 +60,16 @@ public:
   void reset_rewind();
 
   void predict(double t);
-  std::optional<Estimate> predict_and_update_batch(double t, int kind, std::vector<Eigen::Map<Eigen::VectorXd>> z,
-      std::vector<Eigen::Map<MatrixXdr>> R, std::vector<std::vector<double>> extra_args = {{}}, bool augment = false);
+  std::optional<Estimate> predict_and_update_batch(double t, int kind, const std::vector<Eigen::Map<Eigen::VectorXd>> &z,
+      const std::vector<Eigen::Map<MatrixXdr>> &R, const std::vector<std::vector<double>> &extra_args = {{}}, bool augment = false);
 
   extra_routine_t get_extra_routine(const std::string& routine);
 
 private:
   std::deque<Observation> rewind(double t);
-  void checkpoint(Observation& obs);
+  void checkpoint(const Observation &obs);
 
-  Estimate predict_and_update_batch(Observation& obs, bool augment);
+  Estimate predict_and_update_batch(const Observation &obs, bool augment);
   Eigen::VectorXd update(int kind, Eigen::VectorXd z, MatrixXdr R, std::vector<double> extra_args);
 
   // stuct with linked sympy generated functions
