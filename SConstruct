@@ -1,21 +1,34 @@
 import os
+import platform
 import subprocess
 import sysconfig
 import numpy as np
 
 arch = subprocess.check_output(["uname", "-m"], encoding='utf8').rstrip()
+if platform.system() == "Darwin":
+  arch = "Darwin"
 
 common = ''
+py_include = sysconfig.get_paths()['include']
 
-python_path = sysconfig.get_paths()['include']
+libpath = []
 cpppath = [
   '#',
   '#rednose',
   '#rednose/examples/generated',
   '/usr/lib/include',
-  python_path,
+  py_include,
   np.get_include(),
 ]
+
+if arch == "Darwin":
+  brew_prefix = subprocess.check_output(['brew', '--prefix'], encoding='utf8').strip()
+  libpath += [
+    f"{brew_prefix}/lib",
+  ]
+  cpppath += [
+    f"{brew_prefix}/include",
+  ]
 
 env = Environment(
   ENV=os.environ,
@@ -32,7 +45,7 @@ env = Environment(
     "-Werror=format-extra-args",
     "-Wshadow",
   ],
-  LIBPATH=["#rednose/examples/generated"],
+  LIBPATH=libpath + ["#rednose/examples/generated"],
   CFLAGS="-std=gnu11",
   CXXFLAGS="-std=c++1z",
   CPPPATH=cpppath,
@@ -43,17 +56,18 @@ env = Environment(
 # Cython build enviroment
 envCython = env.Clone()
 envCython["CCFLAGS"] += ["-Wno-#warnings", "-Wno-shadow", "-Wno-deprecated-declarations"]
+envCython["CPPPATH"] += [py_include, np.get_include()]
 
 envCython["LIBS"] = []
 if arch == "Darwin":
   envCython["LINKFLAGS"] = ["-bundle", "-undefined", "dynamic_lookup"]
 elif arch == "aarch64":
   envCython["LINKFLAGS"] = ["-shared"]
-  envCython["LIBS"] = [os.path.basename(python_path)]
+  envCython["LIBS"] = [os.path.basename(py_include)]
 else:
   envCython["LINKFLAGS"] = ["-pthread", "-shared"]
 
 Export('env', 'envCython', 'common')
 
 SConscript(['#rednose/SConscript'])
-SConscript(['#examples/SConscript'])
+SConscript(['#rednose/examples/SConscript'])

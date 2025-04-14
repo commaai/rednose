@@ -1,4 +1,31 @@
-# https://beta.ruff.rs/docs/configuration/#using-pyprojecttoml
+[project]
+name = "rednose"
+requires-python = ">= 3.11"
+version = "0.1.0"
+
+dependencies = [
+  "sympy",
+  "numpy<2.0",
+  "scipy",
+  "tqdm",
+  "cffi",
+  "scons",
+  "Cython",
+  "setuptools",
+]
+
+[project.optional-dependencies]
+dev = [
+  "ruff",
+  "pre-commit",
+  "pytest",
+  "pytest-xdist",
+]
+
+[build-system]
+requires = ["setuptools", "scons", "Cython", "numpy<2.0", "sympy", "pytest", "cffi"]
+build-backend = "setuptools.build_meta"
+
 [tool.ruff]
 line-length = 160
 target-version="py311"
