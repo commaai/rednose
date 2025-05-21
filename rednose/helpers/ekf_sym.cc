@@ -4,9 +4,9 @@
 using namespace EKFS;
 using namespace Eigen;
 
-EKFSym::EKFSym(std::string name, Map<MatrixXdr> Q, Map<VectorXd> x_initial, Map<MatrixXdr> P_initial, int dim_main,
-    int dim_main_err, int N, int dim_augment, int dim_augment_err, std::vector<int> maha_test_kinds,
-    std::vector<int> quaternion_idxs, std::vector<std::string> global_vars, double max_rewind_age)
+EKFSym::EKFSym(const std::string &name, const Map<MatrixXdr> &Q, const Map<VectorXd> &x_initial, const Map<MatrixXdr> &P_initial, int dim_main,
+    int dim_main_err, int N, int dim_augment, int dim_augment_err, const std::vector<int> &maha_test_kinds,
+    const std::vector<int> &quaternion_idxs, const std::vector<std::string> &global_vars, double max_rewind_age)
 {
   // TODO: add logger
   this->ekf = ekf_lookup(name);
@@ -42,7 +42,7 @@ EKFSym::EKFSym(std::string name, Map<MatrixXdr> Q, Map<VectorXd> x_initial, Map<
   this->init_state(x_initial, P_initial, NAN);
 }
 
-void EKFSym::init_state(Map<VectorXd> state, Map<MatrixXdr> covs, double init_filter_time) {
+void EKFSym::init_state(const Map<VectorXd> &state, const Map<MatrixXdr> &covs, double init_filter_time) {
   this->x = state;
   this->P = covs;
   this->filter_time = init_filter_time;
@@ -80,8 +80,8 @@ void EKFSym::set_global(std::string global_var, double val) {
   this->ekf->sets.at(global_var)(val);
 }
 
-std::optional<Estimate> EKFSym::predict_and_update_batch(double t, int kind, std::vector<Map<VectorXd>> z_map,
-    std::vector<Map<MatrixXdr>> R_map, std::vector<std::vector<double>> extra_args, bool augment)
+std::optional<Estimate> EKFSym::predict_and_update_batch(double t, int kind, const std::vector<Map<VectorXd>> &z_map,
+    const std::vector<Map<MatrixXdr>> &R_map, const std::vector<std::vector<double>> &extra_args, bool augment)
 {
   // TODO handle rewinding at this level
 
@@ -141,7 +141,7 @@ std::deque<Observation> EKFSym::rewind(double t) {
   return rewound;
 }
 
-void EKFSym::checkpoint(Observation& obs) {
+void EKFSym::checkpoint(const Observation &obs) {
   // push to rewinder
   this->rewind_t.push_back(this->filter_time);
   this->rewind_states.push_back(std::make_pair(this->x, this->P));
@@ -155,7 +155,7 @@ void EKFSym::checkpoint(Observation& obs) {
   }
 }
 
-Estimate EKFSym::predict_and_update_batch(Observation& obs, bool augment) {
+Estimate EKFSym::predict_and_update_batch(const Observation &obs, bool augment) {
   assert(obs.z.size() == obs.R.size());
   assert(obs.z.size() == obs.extra_args.size());
 
