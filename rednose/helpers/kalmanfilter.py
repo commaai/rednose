@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Dict
 
 import numpy as np
 
@@ -8,7 +8,7 @@ class KalmanFilter:
   initial_x = np.zeros((0, 0))
   initial_P_diag = np.zeros((0, 0))
   Q = np.zeros((0, 0))
-  obs_noise: dict[int, Any] = {}
+  obs_noise: Dict[int, Any] = {}
 
   # Should be initialized when initializating a KalmanFilter implementation
   filter = None

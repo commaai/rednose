@@ -1,0 +1,6 @@
+include LICENSE
+include README.*
+recursive-include cmake/*.cmake
+recursive-include rednose/templates *.c
+recursive-include rednose *.pyx *.pxd *.h *.hpp *.cc *.cpp *.npy
+global-exclude *.py[cod] __pycache__ *.so
