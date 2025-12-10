@@ -11,7 +11,7 @@ if common != "":
 
 ekf_objects = env.SharedObject(cc_sources)
 rednose = env.Library("helpers/ekf_sym", ekf_objects, LIBS=libs)
-rednose_python = envCython.Program("helpers/ekf_sym_pyx.so", ["helpers/ekf_sym_pyx.pyx", ekf_objects],
-                                   LIBS=libs + envCython["LIBS"])
+rednose_python = envCython.SharedLibrary("helpers/_ekf_sym_module.so", ["helpers/ekf_sym_module.cc", ekf_objects],
+                                   LIBS=libs + envCython["LIBS"], SHLIBPREFIX="", CPPPATH=envCython["CPPPATH"] + [Dir('.').abspath])
 
 Export('rednose', 'rednose_python')
