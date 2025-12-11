@@ -36,13 +36,13 @@ class States():
 class KinematicKalman(KalmanFilter):
   name = 'kinematic'
 
-  initial_x = np.array([0.5, 0.0])
+  initial_x: np.ndarray = np.array([0.5, 0.0])
 
   # state covariance
-  initial_P_diag = np.array([1.0**2, 1.0**2])
+  initial_P_diag: np.ndarray = np.array([1.0**2, 1.0**2])
 
   # process noise
-  Q = np.diag([0.1**2, 2.0**2])
+  Q: np.ndarray = np.diag([0.1**2, 2.0**2])
 
   obs_noise = {ObservationKind.POSITION: np.atleast_2d(0.1**2)}
 

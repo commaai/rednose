@@ -34,4 +34,4 @@ def load_code(folder, name):
 class KalmanError(Exception):
   pass
 
-from ._ekf_sym_module import EKFSym
+from ._ekf_sym_module import EKFSym  # noqa: F401
