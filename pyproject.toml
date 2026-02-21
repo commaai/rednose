@@ -25,5 +25,6 @@ include-package-data = true
 
 [tool.setuptools.package-data]
 "rednose.helpers" = ["chi2_lookup_table.npy", "*.h", "*.cc", "*.pyx", "*.pxd"]
+"rednose.logger" = ["*.h"]
 "rednose.templates" = ["*"]
 "rednose.site_scons" = ["*.py"]
