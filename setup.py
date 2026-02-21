@@ -18,7 +18,12 @@ extensions = [
         ],
         language="c++",
         extra_compile_args=cpp_args,
-        include_dirs=[rednose_dir, np.get_include()],
+        include_dirs=[
+            rednose_dir,                                    # for "rednose/helpers/..." includes
+            os.path.join(rednose_dir, "rednose"),           # for "logger/logger.h" includes
+            os.path.join(rednose_dir, "rednose", "helpers"), # for local includes like "ekf_sym.h"
+            np.get_include(),
+        ],
         libraries=["dl"],
     ),
 ]
