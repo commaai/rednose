@@ -4,41 +4,41 @@
 using namespace EKFS;
 using namespace Eigen;
 
-EKFSym::EKFSym(std::string name, Map<MatrixXdr> Q, Map<VectorXd> x_initial, Map<MatrixXdr> P_initial, int dim_main,
-    int dim_main_err, int N, int dim_augment, int dim_augment_err, std::vector<int> maha_test_kinds,
-    std::vector<int> quaternion_idxs, std::vector<std::string> global_vars, double max_rewind_age)
+EKFSym::EKFSym(std::string name_, Map<MatrixXdr> Q_, Map<VectorXd> x_initial, Map<MatrixXdr> P_initial, int dim_main_,
+    int dim_main_err_, int N_, int dim_augment_, int dim_augment_err_, std::vector<int> maha_test_kinds_,
+    std::vector<int> quaternion_idxs_, std::vector<std::string> global_vars_, double max_rewind_age_)
 {
   // TODO: add logger
-  this->ekf = ekf_lookup(name);
+  this->ekf = ekf_lookup(name_);
   assert(this->ekf);
 
-  this->msckf = N > 0;
-  this->N = N;
-  this->dim_augment = dim_augment;
-  this->dim_augment_err = dim_augment_err;
-  this->dim_main = dim_main;
-  this->dim_main_err = dim_main_err;
+  this->msckf = N_ > 0;
+  this->N = N_;
+  this->dim_augment = dim_augment_;
+  this->dim_augment_err = dim_augment_err_;
+  this->dim_main = dim_main_;
+  this->dim_main_err = dim_main_err_;
 
   this->dim_x = x_initial.rows();
   this->dim_err = P_initial.rows();
 
   assert(dim_main + dim_augment * N == dim_x);
   assert(dim_main_err + dim_augment_err * N == this->dim_err);
-  assert(Q.rows() == P_initial.rows() && Q.cols() == P_initial.cols());
+  assert(Q_.rows() == P_initial.rows() && Q_.cols() == P_initial.cols());
 
   // kinds that should get mahalanobis distance
   // tested for outlier rejection
-  this->maha_test_kinds = maha_test_kinds;
+  this->maha_test_kinds = maha_test_kinds_;
 
   // quaternions need normalization
-  this->quaternion_idxs = quaternion_idxs;
+  this->quaternion_idxs = quaternion_idxs_;
 
-  this->global_vars = global_vars;
+  this->global_vars = global_vars_;
 
   // Process noise
-  this->Q = Q;
+  this->Q = Q_;
 
-  this->max_rewind_age = max_rewind_age;
+  this->max_rewind_age = max_rewind_age_;
   this->init_state(x_initial, P_initial, NAN);
 }
 
