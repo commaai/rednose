@@ -5,8 +5,8 @@ import numpy as np
 
 class KalmanFilter:
   name = "<name>"
-  initial_x = np.zeros((0, 0))
-  initial_P_diag = np.zeros((0, 0))
+  initial_x = np.zeros(0)
+  initial_P_diag = np.zeros(0)
   Q = np.zeros((0, 0))
   obs_noise: dict[int, Any] = {}
 
