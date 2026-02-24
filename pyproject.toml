@@ -1,16 +1,30 @@
-# https://beta.ruff.rs/docs/configuration/#using-pyprojecttoml
-[tool.ruff]
-line-length = 160
-target-version="py311"
+[project]
+name = "rednose"
+version = "0.1.0"
+description = "Kalman filter library"
+requires-python = ">=3.11,<3.13"
+license = {text = "MIT"}
+authors = [{name = "comma.ai"}]
+dependencies = [
+  "numpy",
+  "cffi",
+  "sympy",
+  "scons",
+  "Cython",
+]
 
-[tool.ruff.lint]
-select = ["E", "F", "W", "PIE", "C4", "ISC", "RUF100", "A"]
-ignore = ["W292", "E741", "E402", "C408", "ISC003"]
-flake8-implicit-str-concat.allow-multiline=false
+[project.optional-dependencies]
+dev = ["scipy", "pytest", "pytest-xdist", "ruff"]
 
-[tool.ruff.lint.flake8-tidy-imports.banned-api]
-"pytest.main".msg = "pytest.main requires special handling that is easy to mess up!"
-"unittest".msg = "Use pytest"
+[build-system]
+requires = ["setuptools", "Cython", "numpy"]
+build-backend = "setuptools.build_meta"
 
-[tool.pytest.ini_options]
-addopts = "--durations=10 -n auto"
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+"rednose.helpers" = ["chi2_lookup_table.npy", "*.h", "*.cc", "*.pyx", "*.pxd"]
+"rednose.logger" = ["*.h"]
+"rednose.templates" = ["*"]
+"rednose.site_scons" = ["*.py"]

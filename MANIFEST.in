@@ -1,0 +1,5 @@
+recursive-include rednose/helpers *.h *.cc *.pyx *.pxd
+recursive-include rednose/templates *
+include rednose/helpers/chi2_lookup_table.npy
+include rednose/site_scons/rednose_filter.py
+recursive-include rednose/logger *.h
