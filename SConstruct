@@ -19,8 +19,6 @@ cpppath = [
 
 env = Environment(
   ENV=os.environ,
-  CC='clang',
-  CXX='clang++',
   CCFLAGS=[
     "-g",
     "-fPIC",
@@ -42,7 +40,7 @@ env = Environment(
 
 # Cython build enviroment
 envCython = env.Clone()
-envCython["CCFLAGS"] += ["-Wno-#warnings", "-Wno-shadow", "-Wno-deprecated-declarations"]
+envCython["CCFLAGS"] += ["-Wno-#warnings", "-Wno-cpp", "-Wno-shadow", "-Wno-deprecated-declarations"]
 
 envCython["LIBS"] = []
 if arch == "Darwin":
