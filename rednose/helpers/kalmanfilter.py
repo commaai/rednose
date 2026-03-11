@@ -49,4 +49,4 @@ class KalmanFilter:
     if R is None:
       R = self.get_R(kind, len(data))
 
-    self.filter.predict_and_update_batch(t, kind, data, R)
+    return self.filter.predict_and_update_batch(t, kind, data, R)
