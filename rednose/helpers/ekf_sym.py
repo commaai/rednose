@@ -310,12 +310,12 @@ class EKF_sym():
         self.set_globals[global_var] = getattr(lib, f"{name}_set_{global_var}")
 
     # wrap the C++ predict function
+    predict_func = eval(f"lib.{name}_predict", {"lib": lib})  # pylint: disable=eval-used
     def _predict_blas(x, P, dt):
-      func = eval(f"lib.{name}_predict", {"lib": lib})  # pylint: disable=eval-used
-      func(ffi.cast("double *", x.ctypes.data),
-           ffi.cast("double *", P.ctypes.data),
-           ffi.cast("double *", self.Q.ctypes.data),
-           ffi.cast("double", dt))
+      predict_func(ffi.cast("double *", x.ctypes.data),
+                   ffi.cast("double *", P.ctypes.data),
+                   ffi.cast("double *", self.Q.ctypes.data),
+                   ffi.cast("double", dt))
       return x, P
 
     # wrap the C++ update function
