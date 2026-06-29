@@ -9,7 +9,7 @@ from rednose.helpers.kalmanfilter import KalmanFilter
 if __name__ == '__main__':  # generating sympy code
   from rednose.helpers.ekf_sym import gen_code
 else:
-  from rednose.helpers.ekf_sym_pyx import EKF_sym_pyx # pylint: disable=no-name-in-module
+  from rednose.helpers import EKFSym
 
 
 class ObservationKind():
@@ -36,13 +36,13 @@ class States():
 class KinematicKalman(KalmanFilter):
   name = 'kinematic'
 
-  initial_x = np.array([0.5, 0.0])
+  initial_x: np.ndarray = np.array([0.5, 0.0])
 
   # state covariance
-  initial_P_diag = np.array([1.0**2, 1.0**2])
+  initial_P_diag: np.ndarray = np.array([1.0**2, 1.0**2])
 
   # process noise
-  Q = np.diag([0.1**2, 2.0**2])
+  Q: np.ndarray = np.diag([0.1**2, 2.0**2])
 
   obs_noise = {ObservationKind.POSITION: np.atleast_2d(0.1**2)}
 
@@ -73,7 +73,7 @@ class KinematicKalman(KalmanFilter):
     dim_state_err = self.initial_P_diag.shape[0]
 
     # init filter
-    self.filter = EKF_sym_pyx(generated_dir, self.name, self.Q, self.initial_x, np.diag(self.initial_P_diag), dim_state, dim_state_err)
+    self.filter = EKFSym(generated_dir, self.name, self.Q, self.initial_x, np.diag(self.initial_P_diag), dim_state, dim_state_err)
 
 
 if __name__ == "__main__":

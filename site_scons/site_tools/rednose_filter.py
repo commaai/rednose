@@ -9,7 +9,7 @@ def compile_single_filter(env, target, filter_gen_script, output_dir, extra_gen_
   generator_file = File(filter_gen_script)
 
   env.Command(generated_src_files + extra_generated_files,
-              [generator_file] + script_deps, f"{File(generator_file).relpath} {target} {Dir(output_dir).relpath}")
+              [generator_file] + script_deps, f"PYTHONPATH={env['REDNOSE_ROOT']}:$PYTHONPATH {File(generator_file).relpath} {target} {Dir(output_dir).relpath}")
 
   generated_cc_file = File(generated_src_files[:1])
 
@@ -37,8 +37,9 @@ def generate(env):
   templates = env.Glob("$REDNOSE_ROOT/rednose/templates/*")
   sympy_helpers = env.File("$REDNOSE_ROOT/rednose/helpers/sympy_helpers.py")
   ekf_sym = env.File("$REDNOSE_ROOT/rednose/helpers/ekf_sym.py")
+  ekf_sym_lib = env.File("$REDNOSE_ROOT/rednose/helpers/_ekf_sym_module.so")
 
-  gen_script_deps = templates + [sympy_helpers, ekf_sym]
+  gen_script_deps = templates + [sympy_helpers, ekf_sym, ekf_sym_lib]
   filter_lib_deps = []
 
   env.AddMethod(CompileFilterMethod(gen_script_deps, filter_lib_deps), "RednoseCompileFilter")

@@ -8,7 +8,7 @@ import numpy as np
 if __name__ == '__main__':  # generating sympy code
   from rednose.helpers.ekf_sym import gen_code
 else:
-  from rednose.helpers.ekf_sym_pyx import EKF_sym_pyx # pylint: disable=no-name-in-module
+  from rednose.helpers import EKFSym
   from rednose.helpers.ekf_sym import EKF_sym as EKF_sym2
 
 
@@ -71,7 +71,7 @@ class CompareFilter:
     dim_state_err = self.initial_P_diag.shape[0]
 
     # init filter
-    self.filter_py = EKF_sym_pyx(generated_dir, self.name, self.Q, self.initial_x, np.diag(self.initial_P_diag), dim_state, dim_state_err)
+    self.filter_py = EKFSym(generated_dir, self.name, self.Q, self.initial_x, np.diag(self.initial_P_diag), dim_state, dim_state_err)
     self.filter_pyx = EKF_sym2(generated_dir, self.name, self.Q, self.initial_x, np.diag(self.initial_P_diag), dim_state, dim_state_err)
 
   def get_R(self, kind, n):
