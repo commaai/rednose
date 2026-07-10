@@ -1,11 +1,14 @@
-ruff
-sympy
+# Runtime / build (also declared in pyproject.toml)
 numpy
-scipy
 cffi
-scons
-pre-commit
+sympy
+comma-deps-eigen
 Cython
+scons
+
+# Dev
+scipy
 pytest
 pytest-xdist
-comma-deps-eigen
+ruff
+pre-commit

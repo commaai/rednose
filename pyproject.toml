@@ -1,12 +1,47 @@
+[project]
+name = "rednose"
+version = "0.0.1"
+description = "Kalman filter library"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+license = {text = "MIT"}
+authors = [{name = "comma.ai"}]
+dependencies = [
+  "numpy",
+  "cffi",
+  "sympy",
+  "comma-deps-eigen",
+  "Cython",
+  "scons",
+]
+
+[project.optional-dependencies]
+dev = [
+  "scipy",  # regenerate chi2_lookup_table.npy
+  "pytest",
+  "pytest-xdist",
+  "ruff",
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["rednose*"]
+
+[tool.setuptools.package-data]
+"*" = ["helpers/chi2_lookup_table.npy", "templates/*"]
+
 # https://beta.ruff.rs/docs/configuration/#using-pyprojecttoml
 [tool.ruff]
 line-length = 160
-target-version="py311"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "PIE", "C4", "ISC", "RUF100", "A"]
 ignore = ["W292", "E741", "E402", "C408", "ISC003"]
-flake8-implicit-str-concat.allow-multiline=false
+flake8-implicit-str-concat.allow-multiline = false
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
 "pytest.main".msg = "pytest.main requires special handling that is easy to mess up!"
