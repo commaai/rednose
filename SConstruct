@@ -2,6 +2,7 @@ import os
 import subprocess
 import sysconfig
 import numpy as np
+import eigen
 
 arch = subprocess.check_output(["uname", "-m"], encoding='utf8').rstrip()
 
@@ -15,6 +16,7 @@ cpppath = [
   '/usr/lib/include',
   python_path,
   np.get_include(),
+  eigen.INCLUDE_DIR,
 ]
 
 env = Environment(

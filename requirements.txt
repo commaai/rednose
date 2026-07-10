@@ -8,3 +8,4 @@ pre-commit
 Cython
 pytest
 pytest-xdist
+comma-deps-eigen

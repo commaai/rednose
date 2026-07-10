@@ -17,6 +17,7 @@ setup(
     'numpy',
     'cffi',
     'sympy',
+    'comma-deps-eigen',
   ],
   extras_require={
     'dev': [

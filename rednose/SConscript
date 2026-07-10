@@ -1,4 +1,12 @@
+import eigen
+
 Import('env', 'envCython', 'common')
+
+# Eigen is a rednose dependency; keep it off the global openpilot env.
+env = env.Clone()
+env.Append(CPPPATH=[eigen.INCLUDE_DIR])
+envCython = envCython.Clone()
+envCython.Append(CPPPATH=[eigen.INCLUDE_DIR])
 
 cc_sources = [
   "helpers/ekf_load.cc",
