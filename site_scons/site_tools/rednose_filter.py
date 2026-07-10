@@ -25,7 +25,6 @@ class BaseRednoseCompileMethod:
 
 class CompileFilterMethod(BaseRednoseCompileMethod):
   def __call__(self, env, target, filter_gen_script, output_dir, extra_gen_artifacts=[], gen_script_deps=[]):
-    # Generated filters include Eigen via rednose templates.
     env = env.Clone()
     env.Append(CPPPATH=[eigen.INCLUDE_DIR])
 

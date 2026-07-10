@@ -17,10 +17,11 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-  "scipy",  # regenerate chi2_lookup_table.npy
+  "scipy",
   "pytest",
   "pytest-xdist",
   "ruff",
+  "pre-commit",
 ]
 
 [build-system]

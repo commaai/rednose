@@ -9,6 +9,5 @@ ENV PYTHONPATH=/project
 
 COPY . .
 RUN rm -rf .git
-RUN pip3 install --break-system-packages --no-cache-dir -r requirements.txt
-RUN pip3 install --break-system-packages --no-cache-dir .
+RUN pip3 install --break-system-packages --no-cache-dir '.[dev]'
 RUN scons -c && scons -j$(nproc)
