@@ -16,7 +16,7 @@ uv run scons -j8
 
 # *** lint + test ***
 uv run ruff check .
-uv run mypy --ignore-missing-imports .
+uv run ty check .
 uv run pytest
 
 # *** all done ***

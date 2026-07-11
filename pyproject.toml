@@ -22,7 +22,7 @@ dev = [
   "pytest",
   "pytest-xdist",
   "ruff",
-  "mypy",
+  "ty",
 ]
 
 [build-system]
