@@ -1,5 +1,6 @@
 import platform
 
+import eigen
 from SCons.Script import Dir, File
 
 
@@ -24,6 +25,9 @@ class BaseRednoseCompileMethod:
 
 class CompileFilterMethod(BaseRednoseCompileMethod):
   def __call__(self, env, target, filter_gen_script, output_dir, extra_gen_artifacts=[], gen_script_deps=[]):
+    env = env.Clone()
+    env.Append(CPPPATH=[eigen.INCLUDE_DIR])
+
     objects = compile_single_filter(env, target, filter_gen_script, output_dir, extra_gen_artifacts, self.base_py_deps + gen_script_deps)
     linker_flags = env.get("LINKFLAGS", [])
     if platform.system() == "Darwin":

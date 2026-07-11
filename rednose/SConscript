@@ -1,4 +1,11 @@
+import eigen
+
 Import('env', 'envCython', 'common')
+
+env = env.Clone()
+env.Append(CPPPATH=[eigen.INCLUDE_DIR])
+envCython = envCython.Clone()
+envCython.Append(CPPPATH=[eigen.INCLUDE_DIR])
 
 cc_sources = [
   "helpers/ekf_load.cc",
