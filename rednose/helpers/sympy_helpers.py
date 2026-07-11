@@ -145,7 +145,7 @@ def sympy_into_c(sympy_functions, global_vars=None):
 
     # add the output arguments
     for a in r.arguments:
-      if type(a) == codegen.OutputArgument:
+      if type(a) is codegen.OutputArgument:
         nargs.append(a)
 
     # assert len(r.arguments) == len(args)+1
