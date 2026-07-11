@@ -4,13 +4,16 @@ set -e
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd)"
 cd "$DIR"
 
+# *** env setup ***
+uv sync --extra dev --locked
+
 # *** build ***
-scons -j8
+uv run scons -j8
 
 # *** lint + test ***
-ruff check .
-mypy --ignore-missing-imports .
-pytest
+uv run ruff check .
+uv run mypy --ignore-missing-imports .
+uv run pytest
 
 # *** all done ***
 GREEN='\033[0;32m'
