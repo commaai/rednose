@@ -42,3 +42,7 @@ target-version = "py311"
 select = ["E", "F", "W", "PIE", "C4", "ISC", "RUF100", "A"]
 ignore = ["W292", "E741", "E402", "C408", "ISC003"]
 flake8-implicit-str-concat.allow-multiline = false
+
+[tool.ty.rules]
+unresolved-import = "ignore"  # Cython-compiled modules (.pyx) and dynamic SCons exports
+unresolved-attribute = "ignore"  # Cython-backed filter attributes
