@@ -17,7 +17,7 @@ uv run scons -j8
 # *** lint + test ***
 uv run ruff check .
 uv run ty check .
-uv run pytest
+uv run python -m unittest discover
 
 # *** all done ***
 GREEN='\033[0;32m'

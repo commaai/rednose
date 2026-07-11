@@ -1,12 +1,12 @@
-import pytest
 import os
+import unittest
 import numpy as np
 
 from .kinematic_kf import KinematicKalman, ObservationKind, States
 
 GENERATED_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'generated'))
 
-class TestKinematic:
+class TestKinematic(unittest.TestCase):
   def test_kinematic_kf(self):
     np.random.seed(0)
 
@@ -49,10 +49,10 @@ class TestKinematic:
 
     xs, xs_meas, xs_kf, vs_kf, xs_kf_std, vs_kf_std = (np.asarray(a) for a in (xs, xs_meas, xs_kf, vs_kf, xs_kf_std, vs_kf_std))
 
-    assert xs_kf[-1] == pytest.approx(-0.010866289677966417)
-    assert xs_kf_std[-1] == pytest.approx(0.04477103863330089)
-    assert vs_kf[-1] == pytest.approx(-0.8553720537261753)
-    assert vs_kf_std[-1] == pytest.approx(0.6695762270974388)
+    self.assertAlmostEqual(xs_kf[-1], -0.010866289677966417)
+    self.assertAlmostEqual(xs_kf_std[-1], 0.04477103863330089)
+    self.assertAlmostEqual(vs_kf[-1], -0.8553720537261753)
+    self.assertAlmostEqual(vs_kf_std[-1], 0.6695762270974388)
 
     if "PLOT" in os.environ:
       import matplotlib.pyplot as plt  # pylint: disable=import-error

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-import pytest
 import os
 import sys
+import unittest
 import sympy as sp
 import numpy as np
 
@@ -83,7 +83,7 @@ class CompareFilter:
     return R
 
 
-class TestCompare:
+class TestCompare(unittest.TestCase):
   def test_compare(self):
     np.random.seed(0)
 
@@ -115,9 +115,9 @@ class TestCompare:
       kf.filter_py.predict_and_update_batch(t, ObservationKind.POSITION, z, R)
       kf.filter_pyx.predict_and_update_batch(t, ObservationKind.POSITION, z, R)
 
-      assert kf.filter_py.get_filter_time() == pytest.approx(kf.filter_pyx.get_filter_time())
-      assert np.allclose(kf.filter_py.state(), kf.filter_pyx.state())
-      assert np.allclose(kf.filter_py.covs(), kf.filter_pyx.covs())
+      self.assertAlmostEqual(kf.filter_py.get_filter_time(), kf.filter_pyx.get_filter_time())
+      self.assertTrue(np.allclose(kf.filter_py.state(), kf.filter_pyx.state()))
+      self.assertTrue(np.allclose(kf.filter_py.covs(), kf.filter_pyx.covs()))
 
 
 if __name__ == "__main__":
