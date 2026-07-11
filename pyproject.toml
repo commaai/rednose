@@ -3,7 +3,7 @@ name = "rednose"
 version = "0.0.1"
 description = "Kalman filter library"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 license = {text = "MIT"}
 authors = [{name = "comma.ai"}]
 dependencies = [
@@ -13,6 +13,7 @@ dependencies = [
   "comma-deps-eigen",
   "Cython",
   "scons",
+  "setuptools",
 ]
 
 [project.optional-dependencies]
