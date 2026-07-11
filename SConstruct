@@ -1,4 +1,5 @@
 import os
+import platform
 import subprocess
 import sysconfig
 import numpy as np
@@ -45,7 +46,7 @@ envCython = env.Clone()
 envCython["CCFLAGS"] += ["-Wno-#warnings", "-Wno-cpp", "-Wno-shadow", "-Wno-deprecated-declarations"]
 
 envCython["LIBS"] = []
-if arch == "Darwin":
+if platform.system() == "Darwin":
   envCython["LINKFLAGS"] = ["-bundle", "-undefined", "dynamic_lookup"]
 elif arch == "aarch64":
   envCython["LINKFLAGS"] = ["-shared"]
