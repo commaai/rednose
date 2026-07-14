@@ -72,13 +72,13 @@ cdef extern from "rednose/helpers/ekf_sym.h" namespace "EKFS":
 
 @cython.wraparound(False)
 @cython.boundscheck(False)
-cdef np.ndarray[np.float64_t, ndim=2, mode="c"] matrix_to_numpy(MatrixXdr arr):
+cdef np.ndarray[np.float64_t, ndim=2, mode="c"] matrix_to_numpy(MatrixXdr &arr):
   cdef double[:,:] mem_view = <double[:arr.rows(),:arr.cols()]>arr.data()
   return np.copy(np.asarray(mem_view, dtype=np.double, order="C"))
 
 @cython.wraparound(False)
 @cython.boundscheck(False)
-cdef np.ndarray[np.float64_t, ndim=1, mode="c"] vector_to_numpy(VectorXd arr):
+cdef np.ndarray[np.float64_t, ndim=1, mode="c"] vector_to_numpy(VectorXd &arr):
   cdef double[:] mem_view = <double[:arr.rows()]>arr.data()
   return np.copy(np.asarray(mem_view, dtype=np.double, order="C"))
 
@@ -120,11 +120,13 @@ cdef class EKF_sym_pyx:
     )
 
   def state(self):
-    cdef np.ndarray res = vector_to_numpy(self.ekf.state())
+    cdef VectorXd state = self.ekf.state()
+    cdef np.ndarray res = vector_to_numpy(state)
     return res
 
   def covs(self):
-    return matrix_to_numpy(self.ekf.covs())
+    cdef MatrixXdr covs = self.ekf.covs()
+    return matrix_to_numpy(covs)
 
   def set_filter_time(self, double t):
     self.ekf.set_filter_time(t)
@@ -167,14 +169,15 @@ cdef class EKF_sym_pyx:
       return None
 
     cdef VectorXd tmpvec
+    cdef Estimate* est = &res.value()
     return (
-      vector_to_numpy(res.value().xk1),
-      vector_to_numpy(res.value().xk),
-      matrix_to_numpy(res.value().Pk1),
-      matrix_to_numpy(res.value().Pk),
-      res.value().t,
-      res.value().kind,
-      [vector_to_numpy(tmpvec) for tmpvec in res.value().y],
+      vector_to_numpy(est.xk1),
+      vector_to_numpy(est.xk),
+      matrix_to_numpy(est.Pk1),
+      matrix_to_numpy(est.Pk),
+      est.t,
+      est.kind,
+      [vector_to_numpy(tmpvec) for tmpvec in est.y],
       z,  # TODO: take return values?
       extra_args,
     )
