@@ -9,7 +9,7 @@ if __name__ == '__main__':  # Generating sympy
   from rednose.helpers.sympy_helpers import euler_rotate, quat_matrix_r, quat_rotate
   from rednose.helpers.ekf_sym import gen_code
 else:
-  from rednose.helpers.ekf_sym_pyx import EKF_sym_pyx  # pylint: disable=no-name-in-module
+  from rednose.helpers.ekf_sym_ctypes import EKF_sym_ctypes
 
 EARTH_GM = 3.986005e14  # m^3/s^2 (gravitational constant * mass of earth)
 
@@ -258,7 +258,7 @@ class LiveKalman():
                       ObservationKind.ECEF_POS: np.diag([5**2, 5**2, 5**2])}
 
     # init filter
-    self.filter = EKF_sym_pyx(generated_dir, self.name, self.Q, self.initial_x, np.diag(self.initial_P_diag), self.dim_state, self.dim_state_err)
+    self.filter = EKF_sym_ctypes(generated_dir, self.name, self.Q, self.initial_x, np.diag(self.initial_P_diag), self.dim_state, self.dim_state_err)
 
   @property
   def x(self):
@@ -266,7 +266,7 @@ class LiveKalman():
 
   @property
   def t(self):
-    return self.filter.filter_time
+    return self.filter.get_filter_time()
 
   @property
   def P(self):
@@ -296,14 +296,10 @@ class LiveKalman():
     else:
       r = self.filter.predict_and_update_batch(t, kind, data, self.get_R(kind, len(data)))
 
-    # Normalize quats
-    quat_norm = np.linalg.norm(self.filter.x[3:7, 0])
-
-    # Should not continue if the quats behave this weirdly
+    # The native filter normalizes configured quaternion slices after every update.
+    quat_norm = np.linalg.norm(self.filter.state()[States.ECEF_ORIENTATION])
     if not (0.1 < quat_norm < 10):
       raise KalmanError("Kalman filter quaternions unstable")
-
-    self.filter.x[States.ECEF_ORIENTATION, 0] = self.filter.x[States.ECEF_ORIENTATION, 0] / quat_norm
 
     return r
 

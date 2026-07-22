@@ -11,7 +11,6 @@ dependencies = [
   "cffi",
   "sympy",
   "comma-deps-eigen",
-  "Cython",
   "scons",
   "setuptools",
 ]
@@ -44,5 +43,5 @@ ignore = ["W292", "E741", "E402", "C408", "ISC003"]
 flake8-implicit-str-concat.allow-multiline = false
 
 [tool.ty.rules]
-unresolved-import = "ignore"  # Cython-compiled modules (.pyx) and dynamic SCons exports
-unresolved-attribute = "ignore"  # Cython-backed filter attributes
+unresolved-import = "ignore"  # Native libraries and dynamic SCons exports
+unresolved-attribute = "ignore"  # Native-backed filter attributes
