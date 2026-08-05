@@ -31,7 +31,7 @@ build-backend = "setuptools.build_meta"
 include = ["rednose*"]
 
 [tool.setuptools.package-data]
-"*" = ["helpers/chi2_lookup_table.npy", "templates/*"]
+"*" = ["*.so", "helpers/chi2_lookup_table.npy", "templates/*"]
 
 # https://beta.ruff.rs/docs/configuration/#using-pyprojecttoml
 [tool.ruff]
