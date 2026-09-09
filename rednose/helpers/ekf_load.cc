@@ -26,6 +26,8 @@ void ekf_load_and_register(const std::string& ekf_directory, const std::string& 
 
 #ifdef __APPLE__
   std::string dylib_ext = ".dylib";
+#elif defined(_WIN32)
+  std::string dylib_ext = ".dll";
 #else
   std::string dylib_ext = ".so";
 #endif

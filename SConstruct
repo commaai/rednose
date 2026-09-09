@@ -1,10 +1,12 @@
 import os
 import platform
 import subprocess
+import sys
 import sysconfig
 import numpy as np
 import eigen
 
+WINDOWS = platform.system() == "Windows"
 arch = subprocess.check_output(["uname", "-m"], encoding='utf8').rstrip()
 
 common = ''
@@ -38,8 +40,12 @@ env = Environment(
   CXXFLAGS="-std=c++1z",
   CPPPATH=cpppath,
   REDNOSE_ROOT=Dir("#").abspath,
-  tools=["default", "cython", "rednose_filter"],
+  tools=["mingw" if WINDOWS else "default", "cython", "rednose_filter"],  # the default tool picks MSVC on Windows
 )
+if WINDOWS:
+  env["CC"], env["CXX"] = "clang", "clang++"  # the mingw tool assumes gcc
+  env["SHLIBPREFIX"] = "lib"  # the mingw tool drops the prefix ekf_load expects
+  env.Append(LINKFLAGS=["-static"])  # libc++ into the DLLs so they load outside the MSYS2 shell
 
 # Cython build enviroment
 envCython = env.Clone()
@@ -48,6 +54,10 @@ envCython["CCFLAGS"] += ["-Wno-#warnings", "-Wno-cpp", "-Wno-shadow", "-Wno-depr
 envCython["LIBS"] = []
 if platform.system() == "Darwin":
   envCython["LINKFLAGS"] = ["-bundle", "-undefined", "dynamic_lookup"]
+elif WINDOWS:
+  envCython["LINKFLAGS"] = ["-shared", "-static"]
+  envCython["LIBPATH"] += [os.path.join(sys.base_prefix, "libs")]
+  envCython["LIBS"] = [f"python{sys.version_info.major}{sys.version_info.minor}"]
 elif arch == "aarch64":
   envCython["LINKFLAGS"] = ["-shared"]
   envCython["LIBS"] = [os.path.basename(python_path)]
