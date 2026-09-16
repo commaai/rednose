@@ -24,14 +24,14 @@ dev = [
 ]
 
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=64", "Cython", "scons", "numpy", "comma-deps-eigen"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 include = ["rednose*"]
 
 [tool.setuptools.package-data]
-"*" = ["*.so", "helpers/chi2_lookup_table.npy", "templates/*"]
+rednose = ["helpers/*.h", "helpers/*.a", "helpers/*.so", "helpers/*.dylib", "helpers/chi2_lookup_table.npy", "templates/*", "site_scons/site_tools/*.py"]
 
 # https://beta.ruff.rs/docs/configuration/#using-pyprojecttoml
 [tool.ruff]

@@ -1,0 +1,3 @@
+include SConstruct
+graft rednose
+global-exclude __pycache__ *.pyc *.o *.os *.d
