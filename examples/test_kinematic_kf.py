@@ -55,7 +55,7 @@ class TestKinematic(unittest.TestCase):
     self.assertAlmostEqual(vs_kf_std[-1], 0.6695762270974388)
 
     if "PLOT" in os.environ:
-      import matplotlib.pyplot as plt  # pylint: disable=import-error
+      import matplotlib.pyplot as plt  # ty: ignore[unresolved-import]
       plt.figure()
       plt.subplot(2, 1, 1)
       plt.plot(ts, xs, 'k', label='Simulation')

@@ -1,6 +1,11 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
+
+
+if TYPE_CHECKING:
+  from rednose.helpers.ekf_sym import EKF_sym
+  from rednose.helpers.ekf_sym_pyx import EKF_sym_pyx
 
 
 class KalmanFilter:
@@ -10,8 +15,8 @@ class KalmanFilter:
   Q: np.ndarray = np.zeros((0, 0))
   obs_noise: dict[int, Any] = {}
 
-  # Should be initialized when initializating a KalmanFilter implementation
-  filter = None
+  # Initialized by each KalmanFilter implementation.
+  filter: EKF_sym | EKF_sym_pyx
 
   @property
   def x(self):
