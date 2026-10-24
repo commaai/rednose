@@ -2,7 +2,7 @@ import os
 import platform
 import subprocess
 import sysconfig
-import numpy as np
+import nanobind
 import eigen
 
 arch = subprocess.check_output(["uname", "-m"], encoding='utf8').rstrip()
@@ -16,7 +16,6 @@ cpppath = [
   '#rednose/examples/generated',
   '/usr/lib/include',
   python_path,
-  np.get_include(),
   eigen.INCLUDE_DIR,
 ]
 
@@ -38,23 +37,28 @@ env = Environment(
   CXXFLAGS="-std=c++1z",
   CPPPATH=cpppath,
   REDNOSE_ROOT=Dir("#").abspath,
-  tools=["default", "cython", "rednose_filter"],
+  tools=["default", "rednose_filter"],
 )
 
-# Cython build enviroment
-envCython = env.Clone()
-envCython["CCFLAGS"] += ["-Wno-#warnings", "-Wno-cpp", "-Wno-shadow", "-Wno-deprecated-declarations"]
+# Python extension build environment
+envNanobind = env.Clone()
+nanobind_dir = os.path.dirname(nanobind.__file__)
+envNanobind.Append(
+  CPPPATH=[os.path.join(eigen.INCLUDE_DIR, "eigen3"), nanobind.include_dir(), os.path.join(nanobind_dir, "ext", "robin_map", "include")],
+  CCFLAGS=["-fvisibility=hidden"],
+)
+envNanobind["NANOBIND_SOURCE"] = os.path.join(nanobind_dir, "src", "nb_combined.cpp")
 
-envCython["LIBS"] = []
+envNanobind["LIBS"] = []
 if platform.system() == "Darwin":
-  envCython["LINKFLAGS"] = ["-bundle", "-undefined", "dynamic_lookup"]
+  envNanobind["LINKFLAGS"] = ["-bundle", "-undefined", "dynamic_lookup"]
 elif arch == "aarch64":
-  envCython["LINKFLAGS"] = ["-shared"]
-  envCython["LIBS"] = [os.path.basename(python_path)]
+  envNanobind["LINKFLAGS"] = ["-shared"]
+  envNanobind["LIBS"] = [os.path.basename(python_path)]
 else:
-  envCython["LINKFLAGS"] = ["-pthread", "-shared"]
+  envNanobind["LINKFLAGS"] = ["-pthread", "-shared"]
 
-Export('env', 'envCython', 'common')
+Export('env', 'envNanobind', 'common')
 
 SConscript(['#rednose/SConscript'])
 SConscript(['#examples/SConscript'])
