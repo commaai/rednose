@@ -1,4 +1,4 @@
-import sympy as sp
+import casadi as ca
 import numpy as np
 
 # TODO: remove code duplication between openpilot.common.orientation
@@ -60,7 +60,7 @@ rotations_from_quats = quat2rot
 
 
 def cross(x):
-  ret = sp.Matrix(np.zeros((3, 3)))
+  ret = ca.SX.zeros(3, 3)
   ret[0, 1], ret[0, 2] = -x[2], x[1]
   ret[1, 0], ret[1, 2] = x[2], -x[0]
   ret[2, 0], ret[2, 1] = -x[1], x[0]
@@ -68,10 +68,10 @@ def cross(x):
 
 
 def rot_to_euler(R):
-  gamma = sp.atan2(R[2, 1], R[2, 2])
-  theta = sp.asin(-R[2, 0])
-  psi = sp.atan2(R[1, 0], R[0, 0])
-  return sp.Matrix([gamma, theta, psi])
+  gamma = ca.atan2(R[2, 1], R[2, 2])
+  theta = ca.asin(-R[2, 0])
+  psi = ca.atan2(R[1, 0], R[0, 0])
+  return ca.vertcat(gamma, theta, psi)
 
 
 def rot_matrix(roll, pitch, yaw):
@@ -86,77 +86,67 @@ def rot_matrix(roll, pitch, yaw):
 
 def euler_rotate(roll, pitch, yaw):
   # make symbolic rotation matrix from eulers
-  matrix_roll = sp.Matrix([[1, 0, 0],
-                           [0, sp.cos(roll), -sp.sin(roll)],
-                           [0, sp.sin(roll), sp.cos(roll)]])
-  matrix_pitch = sp.Matrix([[sp.cos(pitch), 0, sp.sin(pitch)],
+  matrix_roll = ca.blockcat([[1, 0, 0],
+                           [0, ca.cos(roll), -ca.sin(roll)],
+                           [0, ca.sin(roll), ca.cos(roll)]])
+  matrix_pitch = ca.blockcat([[ca.cos(pitch), 0, ca.sin(pitch)],
                             [0, 1, 0],
-                            [-sp.sin(pitch), 0, sp.cos(pitch)]])
-  matrix_yaw = sp.Matrix([[sp.cos(yaw), -sp.sin(yaw), 0],
-                          [sp.sin(yaw), sp.cos(yaw), 0],
+                            [-ca.sin(pitch), 0, ca.cos(pitch)]])
+  matrix_yaw = ca.blockcat([[ca.cos(yaw), -ca.sin(yaw), 0],
+                          [ca.sin(yaw), ca.cos(yaw), 0],
                           [0, 0, 1]])
-  return matrix_yaw * matrix_pitch * matrix_roll
+  return matrix_yaw @ matrix_pitch @ matrix_roll
 
 
 def quat_rotate(q0, q1, q2, q3):
   # make symbolic rotation matrix from quat
-  return sp.Matrix([[q0**2 + q1**2 - q2**2 - q3**2, 2 * (q1 * q2 + q0 * q3), 2 * (q1 * q3 - q0 * q2)],
+  return ca.blockcat([[q0**2 + q1**2 - q2**2 - q3**2, 2 * (q1 * q2 + q0 * q3), 2 * (q1 * q3 - q0 * q2)],
                     [2 * (q1 * q2 - q0 * q3), q0**2 - q1**2 + q2**2 - q3**2, 2 * (q2 * q3 + q0 * q1)],
                     [2 * (q1 * q3 + q0 * q2), 2 * (q2 * q3 - q0 * q1), q0**2 - q1**2 - q2**2 + q3**2]]).T
 
 
 def quat_matrix_l(p):
-  return sp.Matrix([[p[0], -p[1], -p[2], -p[3]],
+  return ca.blockcat([[p[0], -p[1], -p[2], -p[3]],
                     [p[1],  p[0], -p[3],  p[2]],
                     [p[2],  p[3],  p[0], -p[1]],
                     [p[3], -p[2],  p[1],  p[0]]])
 
 
 def quat_matrix_r(p):
-  return sp.Matrix([[p[0], -p[1], -p[2], -p[3]],
+  return ca.blockcat([[p[0], -p[1], -p[2], -p[3]],
                     [p[1],  p[0],  p[3], -p[2]],
                     [p[2], -p[3],  p[0],  p[1]],
                     [p[3],  p[2], -p[1],  p[0]]])
 
 
-def sympy_into_c(sympy_functions, global_vars=None):
-  from sympy.utilities import codegen
-  routines = []
-  for name, expr, args in sympy_functions:
-    r = codegen.make_routine(name, expr, language="C99", global_vars=global_vars)
-
-    # argument ordering input to sympy is broken with function with output arguments
-    nargs = []
-
-    # reorder the input arguments
-    for aa in args:
-      if aa is None:
-        nargs.append(codegen.InputArgument(sp.Symbol('unused'), dimensions=[1, 1]))
-        continue
-      found = False
-      for a in r.arguments:
-        if str(aa.name) == str(a.name):
-          nargs.append(a)
-          found = True
-          break
-      if not found:
-        # [1,1] is a hack for Matrices
-        nargs.append(codegen.InputArgument(aa, dimensions=[1, 1]))
-
-    # add the output arguments
-    for a in r.arguments:
-      if type(a) is codegen.OutputArgument:
-        nargs.append(a)
-
-    # assert len(r.arguments) == len(args)+1
-    r.arguments = nargs
-
-    # add routine to list
-    routines.append(r)
-
-  [(_, c_code), (_, c_header)] = codegen.get_code_generator('C', 'ekf', 'C99').write(routines, "ekf")
-  c_header = '\n'.join(x for x in c_header.split("\n") if len(x) > 0 and x[0] != '#')
-
-  c_code = '\n'.join(x for x in c_code.split("\n") if len(x) > 0 and x[0] != '#')
-
-  return c_header, c_code
+def casadi_into_c(routines, global_vars=None, scalar_args=()):
+  globals_ = list(global_vars or [])
+  generator = ca.CodeGenerator('rednose_casadi.c', {'with_header': False})
+  headers, wrappers = [], []
+  for name, expr, args in routines:
+    inputs = [arg if arg is not None else ca.SX.sym(f'unused_{i}') for i, arg in enumerate(args)]
+    # CasADi stores matrices column-major; the existing Eigen ABI is dense row-major.
+    output = ca.densify(ca.vec(expr.T))
+    function = ca.Function(f'casadi_{name}', inputs + globals_, [output], {'cse': True})
+    generator.add(function)
+    declarations, pointers, packing = [], [], []
+    for i, arg in enumerate(args):
+      scalar = arg is not None and arg.numel() == 1 and any(ca.is_equal(arg, candidate) for candidate in scalar_args)
+      declarations.append(f"double {'' if scalar else '*'}arg{i}")
+      if not scalar and arg is not None and arg.shape[1] > 1:
+        rows, cols = map(int, arg.shape)
+        elements = ', '.join(f'arg{i}[{row * cols + col}]' for col in range(cols) for row in range(rows))
+        packing.append(f'  double packed{i}[] = {{{elements}}};\n')
+        pointers.append(f'packed{i}')
+      else:
+        pointers.append(f'&arg{i}' if scalar else f'arg{i}')
+    pointers += [f'&{var.name()}' for var in globals_]
+    declaration = f"void {name}({', '.join(declarations + ['double *out'])})"
+    headers.append(declaration + ';')
+    niw, nw = function.sz_iw(), function.sz_w()
+    wrappers.append(declaration + ' {\n' + ''.join(packing) +
+                    f"  const double *arg[{max(1, function.sz_arg())}] = {{{', '.join(pointers)}}};\n" +
+                    f"  double *res[{max(1, function.sz_res())}] = {{out}};\n" +
+                    f"  casadi_int iw[{max(1, niw)}];\n  double w[{max(1, nw)}];\n" +
+                    f"  casadi_{name}(arg, res, iw, w, 0);\n}}")
+  return '\n'.join(headers), generator.dump() + '\n' + '\n'.join(wrappers)

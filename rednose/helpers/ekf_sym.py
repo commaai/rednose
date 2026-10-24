@@ -3,10 +3,10 @@ import logging
 from bisect import bisect_right
 
 import numpy as np
-import sympy as sp
+import casadi as ca
 from numpy import dot
 
-from rednose.helpers.sympy_helpers import sympy_into_c
+from rednose.helpers.casadi_helpers import casadi_into_c
 from rednose.helpers import TEMPLATE_DIR, load_code
 from rednose.helpers.chi2_lookup import chi2_ppf
 
@@ -40,15 +40,15 @@ def gen_code(folder, name, f_sym, dt_sym, x_sym, obs_eqs, dim_x, dim_err, eskf_p
     f_err_sym = eskf_params[3]
     x_err_sym = eskf_params[4]
   else:
-    nom_x = sp.MatrixSymbol('nom_x', dim_x, 1)
-    true_x = sp.MatrixSymbol('true_x', dim_x, 1)
-    delta_x = sp.MatrixSymbol('delta_x', dim_x, 1)
-    err_function_sym = sp.Matrix(nom_x + delta_x)
-    inv_err_function_sym = sp.Matrix(true_x - nom_x)
+    nom_x = ca.SX.sym('nom_x', dim_x, 1)
+    true_x = ca.SX.sym('true_x', dim_x, 1)
+    delta_x = ca.SX.sym('delta_x', dim_x, 1)
+    err_function_sym = nom_x + delta_x
+    inv_err_function_sym = true_x - nom_x
     err_eqs = [err_function_sym, nom_x, delta_x]
     inv_err_eqs = [inv_err_function_sym, nom_x, true_x]
 
-    H_mod_sym = sp.Matrix(np.eye(dim_x))
+    H_mod_sym = ca.SX.eye(dim_x)
     f_err_sym = f_sym
     x_err_sym = x_sym
 
@@ -73,53 +73,47 @@ def gen_code(folder, name, f_sym, dt_sym, x_sym, obs_eqs, dim_x, dim_err, eskf_p
     N = 0
 
   # linearize with jacobians
-  F_sym = f_err_sym.jacobian(x_err_sym)
-
+  F_sym = ca.jacobian(f_err_sym, x_err_sym)
   if eskf_params:
-    for sym in x_err_sym:
-      F_sym = F_sym.subs(sym, 0)
+    F_sym = ca.substitute(F_sym, x_err_sym, ca.SX.zeros(dim_err))
+  assert ca.depends_on(F_sym, dt_sym)
 
-  assert dt_sym in F_sym.free_symbols
+  obs_eqs = [[h, kind, ea, ca.jacobian(h, x_sym),
+              ca.jacobian(h, ea) if msckf and kind in feature_track_kinds else None] for h, kind, ea in obs_eqs]
 
-  for i in range(len(obs_eqs)):
-    obs_eqs[i].append(obs_eqs[i][0].jacobian(x_sym))
-    if msckf and obs_eqs[i][1] in feature_track_kinds:
-      obs_eqs[i].append(obs_eqs[i][0].jacobian(obs_eqs[i][2]))
-    else:
-      obs_eqs[i].append(None)
-
-  # collect sympy functions
-  sympy_functions = []
+  # collect symbolic functions
+  symbolic_functions = []
 
   # extra routines
-  sympy_functions += extra_routines
+  symbolic_functions += extra_routines
 
   # error functions
-  sympy_functions.append(('err_fun', err_eqs[0], [err_eqs[1], err_eqs[2]]))
-  sympy_functions.append(('inv_err_fun', inv_err_eqs[0], [inv_err_eqs[1], inv_err_eqs[2]]))
+  symbolic_functions.append(('err_fun', err_eqs[0], [err_eqs[1], err_eqs[2]]))
+  symbolic_functions.append(('inv_err_fun', inv_err_eqs[0], [inv_err_eqs[1], inv_err_eqs[2]]))
 
   # H modifier for ESKF updates
-  sympy_functions.append(('H_mod_fun', H_mod_sym, [x_sym]))
+  symbolic_functions.append(('H_mod_fun', H_mod_sym, [x_sym]))
 
   # state propagation function
-  sympy_functions.append(('f_fun', f_sym, [x_sym, dt_sym]))
-  sympy_functions.append(('F_fun', F_sym, [x_sym, dt_sym]))
+  symbolic_functions.append(('f_fun', f_sym, [x_sym, dt_sym]))
+  symbolic_functions.append(('F_fun', F_sym, [x_sym, dt_sym]))
 
   # observation functions
   for h_sym, kind, ea_sym, H_sym, He_sym in obs_eqs:
-    sympy_functions.append(('h_%d' % kind, h_sym, [x_sym, ea_sym]))
-    sympy_functions.append(('H_%d' % kind, H_sym, [x_sym, ea_sym]))
+    symbolic_functions.append(('h_%d' % kind, h_sym, [x_sym, ea_sym]))
+    symbolic_functions.append(('H_%d' % kind, H_sym, [x_sym, ea_sym]))
     if msckf and kind in feature_track_kinds:
-      sympy_functions.append(('He_%d' % kind, He_sym, [x_sym, ea_sym]))
+      symbolic_functions.append(('He_%d' % kind, He_sym, [x_sym, ea_sym]))
 
   # Generate and wrap all th c code
-  sympy_header, code = sympy_into_c(sympy_functions, global_vars)
+  symbolic_header, code = casadi_into_c(symbolic_functions, global_vars, scalar_args=[dt_sym])
 
   header = "#pragma once\n"
   header += "#include \"rednose/helpers/ekf.h\"\n"
   header += "extern \"C\" {\n"
 
   pre_code = f"#include \"{name}.h\"\n"
+  pre_code += "#include <math.h>\n"
   pre_code += "\nnamespace {\n"
   pre_code += "#define DIM %d\n" % dim_x
   pre_code += "#define EDIM %d\n" % dim_err
@@ -128,8 +122,8 @@ def gen_code(folder, name, f_sym, dt_sym, x_sym, obs_eqs, dim_x, dim_err, eskf_p
 
   if global_vars is not None:
     for var in global_vars:
-      pre_code += f"\ndouble {var.name};\n"
-      pre_code += f"\nvoid set_{var.name}(double x){{ {var.name} = x;}}\n"
+      pre_code += f"\ndouble {var.name()};\n"
+      pre_code += f"\nvoid set_{var.name()}(double x){{ {var.name()} = x;}}\n"
 
   post_code = "\n}\n" # namespace
   post_code += "extern \"C\" {\n\n"
@@ -152,8 +146,8 @@ def gen_code(folder, name, f_sym, dt_sym, x_sym, obs_eqs, dim_x, dim_err, eskf_p
     post_code += "}\n"
 
   # For ffi loading of specific functions
-  for line in sympy_header.split("\n"):
-    if line.startswith("void "):  # sympy functions
+  for line in symbolic_header.split("\n"):
+    if line.startswith("void "):  # symbolic functions
       func_call = line[5: line.index(')') + 1]
       header += f"void {name}_{func_call};\n"
       post_code += f"void {name}_{func_call} {{\n"
@@ -165,9 +159,9 @@ def gen_code(folder, name, f_sym, dt_sym, x_sym, obs_eqs, dim_x, dim_err, eskf_p
   post_code += "}\n"
   if global_vars is not None:
     for var in global_vars:
-      header += f"void {name}_set_{var.name}(double x);\n"
-      post_code += f"void {name}_set_{var.name}(double x) {{\n"
-      post_code += f"  set_{var.name}(x);\n"
+      header += f"void {name}_set_{var.name()}(double x);\n"
+      post_code += f"void {name}_set_{var.name()}(double x) {{\n"
+      post_code += f"  set_{var.name()}(x);\n"
       post_code += "}\n"
 
   post_code += "}\n\n" # extern c
@@ -178,7 +172,7 @@ def gen_code(folder, name, f_sym, dt_sym, x_sym, obs_eqs, dim_x, dim_err, eskf_p
     'H': [kind for _, kind, _, _, _ in obs_eqs],
     'update': [kind for _, kind, _, _, _ in obs_eqs],
     'He': [kind for _, kind, _, _, _ in obs_eqs if msckf and kind in feature_track_kinds],
-    'set': [var.name for var in global_vars] if global_vars is not None else [],
+    'set': [var.name() for var in global_vars] if global_vars is not None else [],
   }
   func_extra = [x[0] for x in extra_routines]
 
@@ -263,7 +257,7 @@ class EKF_sym():
       if func[:len(name) + 4] == f'{name}_He_':
         self.feature_track_kinds.append(int(func[len(name) + 4:]))
 
-    # wrap all the sympy functions
+    # wrap all the symbolic functions
     def wrap_1lists(func_name):
       func = eval(f"lib.{name}_{func_name}", {"lib": lib})  # pylint: disable=eval-used
 

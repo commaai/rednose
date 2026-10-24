@@ -19,7 +19,7 @@ most applications those estimators are overkill. They add a lot of complexity an
 
 Conventionally Extended Kalman Filters are implemented by writing the system's dynamic equations and then manually symbolically
 calculating the Jacobians for the linearization. For complex systems this is time consuming and very prone to calculation errors.
-This library symbolically computes the Jacobians using sympy to simplify the system's definition and remove the possibility of introducing calculation errors.
+This library symbolically computes the Jacobians using CasADi to simplify the system's definition and remove the possibility of introducing calculation errors.
 
 ### Error State Kalman Filter
 3D localization algorithms usually also require estimating orientation of an object in 3D. Orientation is generally represented
