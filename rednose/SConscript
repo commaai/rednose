@@ -1,3 +1,5 @@
+import sys
+
 import eigen
 
 Import('env', 'envNanobind', 'common')
@@ -21,5 +23,12 @@ rednose = env.Library("helpers/ekf_sym", ekf_objects, LIBS=libs)
 nanobind_objects = envNanobind.SharedObject("helpers/nanobind", envNanobind["NANOBIND_SOURCE"])
 rednose_python = envNanobind.Program("helpers/ekf_sym_pyx.so", ["helpers/ekf_sym_pyx.cc", ekf_objects, nanobind_objects],
                                    LIBS=libs + envNanobind["LIBS"])
+
+rednose_python_stub = envNanobind.Command(
+  "helpers/ekf_sym_pyx.pyi",
+  rednose_python,
+  [[sys.executable, "-m", "nanobind.stubgen", "-i", Dir("#").abspath,
+   "-m", "rednose.helpers.ekf_sym_pyx", "-o", "$TARGET", "-q"]],
+)
 
 Export('rednose', 'rednose_python')

@@ -91,7 +91,8 @@ class TestCompare(unittest.TestCase):
     R = np.full((3, 2, 2), 0.01, dtype=np.float32)[:, ::2, ::2]
     result = kf.filter_py.predict_and_update_batch(0.0, ObservationKind.POSITION, z, R, [[], [], []])
     expected = kf.filter_pyx.predict_and_update_batch(0.0, ObservationKind.POSITION, z, R, [[], [], []])
-    self.assertIsNotNone(result)
+    assert result is not None
+    assert expected is not None
     for actual, reference in zip(result[:4], expected[:4]):
       np.testing.assert_allclose(actual, reference)
     np.testing.assert_allclose(result[6], expected[6])
