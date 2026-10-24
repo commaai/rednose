@@ -84,6 +84,28 @@ class CompareFilter:
 
 
 class TestCompare(unittest.TestCase):
+  def test_batch_buffers_and_results(self):
+    kf = CompareFilter(GENERATED_DIR)
+    # Exercise conversion of strided, non-double inputs and multiple observations.
+    z = np.array([[1, 0], [2, 0], [3, 0]], dtype=np.float32)[:, ::2]
+    R = np.full((3, 2, 2), 0.01, dtype=np.float32)[:, ::2, ::2]
+    result = kf.filter_py.predict_and_update_batch(0.0, ObservationKind.POSITION, z, R, [[], [], []])
+    expected = kf.filter_pyx.predict_and_update_batch(0.0, ObservationKind.POSITION, z, R, [[], [], []])
+    self.assertIsNotNone(result)
+    for actual, reference in zip(result[:4], expected[:4]):
+      np.testing.assert_allclose(actual, reference)
+    np.testing.assert_allclose(result[6], expected[6])
+    self.assertIs(result[7], z)
+    saved_state = result[1].copy()
+    state = kf.filter_py.state()
+    state[:] = 100
+    np.testing.assert_allclose(kf.filter_py.state(), saved_state)
+    kf.filter_py.predict_and_update_batch(0.1, ObservationKind.POSITION, z, R, [[], [], []])
+    np.testing.assert_array_equal(result[1], saved_state)
+    # Resetting with None preserves the Python API's uninitialized time semantics.
+    kf.filter_py.init_state(CompareFilter.initial_x, np.eye(2), None)
+    self.assertTrue(np.isnan(kf.filter_py.get_filter_time()))
+
   def test_compare(self):
     np.random.seed(0)
 

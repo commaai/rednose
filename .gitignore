@@ -3,10 +3,7 @@ generated/
 *.swp
 *.tmp
 
-# Cython intermediates
-*_pyx.cpp
-*_pyx.h
-*_pyx_api.h
+# SCons objects
 *.os
 
 # Byte-compiled / optimized / DLL files
@@ -147,6 +144,3 @@ dmypy.json
 
 # pytype static type analyzer
 .pytype/
-
-# Cython debug symbols
-cython_debug/
