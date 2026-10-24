@@ -72,7 +72,7 @@ private:
   Estimate predict_and_update_batch(Observation& obs, bool augment);
   Eigen::VectorXd update(int kind, Eigen::VectorXd z, MatrixXdr R, std::vector<double> extra_args);
 
-  // stuct with linked sympy generated functions
+  // struct with linked generated functions
   const EKF *ekf = NULL;
 
   Eigen::VectorXd x;  // state

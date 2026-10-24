@@ -2,10 +2,10 @@
 import os
 import sys
 import unittest
-import sympy as sp
+import casadi as ca
 import numpy as np
 
-if __name__ == '__main__':  # generating sympy code
+if __name__ == '__main__':  # generating code
   from rednose.helpers.ekf_sym import gen_code
 else:
   from rednose.helpers.ekf_sym_pyx import EKF_sym_pyx # pylint: disable=no-name-in-module
@@ -49,19 +49,19 @@ class CompareFilter:
     name = CompareFilter.name
     dim_state = CompareFilter.initial_x.shape[0]
 
-    state_sym = sp.MatrixSymbol('state', dim_state, 1)
-    state = sp.Matrix(state_sym)
+    state_sym = ca.SX.sym('state', dim_state, 1)
+    state = state_sym
 
     position = state[States.POSITION, :][0,:]
     velocity = state[States.VELOCITY, :][0,:]
 
-    dt = sp.Symbol('dt')
-    state_dot = sp.Matrix(np.zeros((dim_state, 1)))
+    dt = ca.SX.sym('dt')
+    state_dot = ca.SX.zeros(dim_state, 1)
     state_dot[States.POSITION.start, 0] = velocity
     f_sym = state + dt * state_dot
 
     obs_eqs = [
-      [sp.Matrix([position]), ObservationKind.POSITION, None],
+      [ca.vertcat(position), ObservationKind.POSITION, None],
     ]
 
     gen_code(generated_dir, name, f_sym, dt, state_sym, obs_eqs, dim_state, dim_state)

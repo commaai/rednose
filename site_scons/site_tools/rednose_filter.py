@@ -39,10 +39,10 @@ class CompileFilterMethod(BaseRednoseCompileMethod):
 
 def generate(env):
   templates = env.Glob("$REDNOSE_ROOT/rednose/templates/*")
-  sympy_helpers = env.File("$REDNOSE_ROOT/rednose/helpers/sympy_helpers.py")
   ekf_sym = env.File("$REDNOSE_ROOT/rednose/helpers/ekf_sym.py")
 
-  gen_script_deps = templates + [sympy_helpers, ekf_sym]
+  casadi_helpers = env.File("$REDNOSE_ROOT/rednose/helpers/casadi_helpers.py")
+  gen_script_deps = templates + [casadi_helpers, ekf_sym]
   filter_lib_deps = []
 
   env.AddMethod(CompileFilterMethod(gen_script_deps, filter_lib_deps), "RednoseCompileFilter")

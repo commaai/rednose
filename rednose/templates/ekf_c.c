@@ -11,7 +11,7 @@ void predict(double *in_x, double *in_P, double *in_Q, double dt) {
   double nx[DIM] = {0};
   double in_F[EDIM*EDIM] = {0};
 
-  // functions from sympy
+  // generated functions
   f_fun(in_x, dt, nx);
   F_fun(in_x, dt, in_F);
 
@@ -55,7 +55,7 @@ void update(double *in_x, double *in_P, Hfun h_fun, Hfun H_fun, Hfun Hea_fun, do
   EEM P(in_P);
   ZZM pre_R(in_R);
 
-  // functions from sympy
+  // generated functions
   h_fun(in_x, in_ea, in_hx);
   H_fun(in_x, in_ea, in_H);
   ZDM pre_H(in_H);

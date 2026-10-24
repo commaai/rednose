@@ -9,7 +9,7 @@ authors = [{name = "comma.ai"}]
 dependencies = [
   "numpy",
   "cffi",
-  "sympy",
+  "casadi",
   "comma-deps-eigen",
   "Cython",
   "scons",
