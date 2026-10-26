@@ -16,7 +16,7 @@ def write_code(folder, name, code, header):
 
 
 def load_code(folder, name):
-  shared_ext = "dylib" if platform.system() == "Darwin" else "so"
+  shared_ext = "dylib" if platform.system() == "Darwin" else "dll" if platform.system() == "Windows" else "so"
   shared_fn = os.path.join(folder, f"lib{name}.{shared_ext}")
   header_fn = os.path.join(folder, f"{name}.h")
 

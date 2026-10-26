@@ -70,5 +70,11 @@ def generate(env):
 
   create_builder(env)
 
+  # Python imports extension modules as .pyd on Windows; the SConscripts name them .so
+  if env["PLATFORM"] == "win32":
+    def pyd_emitter(target, source, env):
+      return [env.File(str(t)[:-3] + ".pyd") if str(t).endswith(".so") else t for t in target], source
+    env.Append(PROGEMITTER=[pyd_emitter])
+
 def exists(env):
   return True

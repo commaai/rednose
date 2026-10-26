@@ -6,8 +6,16 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: ${{ contains(matrix.os, 'windows') && 'msys2 {0}' || 'bash -e {0}' }}
     steps:
     - uses: actions/checkout@v7
+    - uses: msys2/setup-msys2@v2
+      if: runner.os == 'Windows'
+      with:
+        msystem: CLANG64
+        install: mingw-w64-clang-x86_64-clang mingw-w64-clang-x86_64-dlfcn mingw-w64-clang-x86_64-uv  # clang for scons, dlopen for the filters
     - run: ./test.sh
