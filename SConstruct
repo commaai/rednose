@@ -45,7 +45,7 @@ envNanobind = env.Clone()
 nanobind_dir = os.path.dirname(nanobind.__file__)
 envNanobind.Append(
   CPPPATH=[os.path.join(eigen.INCLUDE_DIR, "eigen3"), nanobind.include_dir(), os.path.join(nanobind_dir, "ext", "robin_map", "include")],
-  CCFLAGS=["-fvisibility=hidden"],
+  CCFLAGS=["-fvisibility=hidden", "-Wno-shadow"],
 )
 envNanobind["NANOBIND_SOURCE"] = os.path.join(nanobind_dir, "src", "nb_combined.cpp")
 

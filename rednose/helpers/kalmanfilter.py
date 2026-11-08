@@ -16,7 +16,7 @@ class KalmanFilter:
   obs_noise: dict[int, Any] = {}
 
   # Initialized by each KalmanFilter implementation.
-  filter: EKF_sym | EKF_sym_pyx
+  filter: "EKF_sym | EKF_sym_pyx"
 
   @property
   def x(self):
