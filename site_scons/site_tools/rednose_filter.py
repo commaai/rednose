@@ -1,7 +1,7 @@
 import platform
 
 import eigen
-from SCons.Script import Dir, File
+from SCons.Script import Dir, File  # ty: ignore[import-not-found]
 
 
 def compile_single_filter(env, target, filter_gen_script, output_dir, extra_gen_artifacts, script_deps):

@@ -266,7 +266,7 @@ class LiveKalman():
 
   @property
   def t(self):
-    return self.filter.filter_time
+    return self.filter.get_filter_time()
 
   @property
   def P(self):
@@ -297,13 +297,13 @@ class LiveKalman():
       r = self.filter.predict_and_update_batch(t, kind, data, self.get_R(kind, len(data)))
 
     # Normalize quats
-    quat_norm = np.linalg.norm(self.filter.x[3:7, 0])
+    quat_norm = np.linalg.norm(self.filter.state()[States.ECEF_ORIENTATION])
 
     # Should not continue if the quats behave this weirdly
     if not (0.1 < quat_norm < 10):
       raise KalmanError("Kalman filter quaternions unstable")
 
-    self.filter.x[States.ECEF_ORIENTATION, 0] = self.filter.x[States.ECEF_ORIENTATION, 0] / quat_norm
+    self.filter.normalize_slice(States.ECEF_ORIENTATION.start, States.ECEF_ORIENTATION.stop)
 
     return r
 
