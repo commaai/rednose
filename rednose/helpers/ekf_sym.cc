@@ -127,7 +127,7 @@ std::deque<Observation> EKFSym::rewind(double t) {
 
   // rewind observations until t is after previous observation
   while (this->rewind_t.back() > t) {
-    rewound.push_front(this->rewind_obscache.back());
+    rewound.push_front(std::move(this->rewind_obscache.back()));
     this->rewind_t.pop_back();
     this->rewind_states.pop_back();
     this->rewind_obscache.pop_back();
