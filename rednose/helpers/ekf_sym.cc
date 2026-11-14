@@ -98,11 +98,11 @@ std::optional<Estimate> EKFSym::predict_and_update_batch(double t, int kind, std
   obs.t = t;
   obs.kind = kind;
   obs.extra_args = extra_args;
-  for (Map<VectorXd> zi : z_map) {
-    obs.z.push_back(zi);
+  for (const auto &zi : z_map) {
+    obs.z.emplace_back(zi);
   }
-  for (Map<MatrixXdr> Ri : R_map) {
-    obs.R.push_back(Ri);
+  for (const auto &Ri : R_map) {
+    obs.R.emplace_back(Ri);
   }
 
   std::optional<Estimate> res = std::make_optional(this->predict_and_update_batch(obs, augment));
@@ -171,12 +171,13 @@ Estimate EKFSym::predict_and_update_batch(Observation& obs, bool augment) {
 
   // update batch
   std::vector<VectorXd> y;
+  y.reserve(obs.z.size());
   for (int i = 0; i < obs.z.size(); i++) {
     assert(obs.z[i].rows() == obs.R[i].rows());
     assert(obs.z[i].rows() == obs.R[i].cols());
 
     // update state
-    y.push_back(this->update(obs.kind, obs.z[i], obs.R[i], obs.extra_args[i]));
+    y.emplace_back(this->update(obs.kind, obs.z[i], obs.R[i], obs.extra_args[i]));
   }
 
   res.xk = this->x;
